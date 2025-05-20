@@ -1,0 +1,3158 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Image Grid Maker</title>
+    <style>
+        /* Core Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .version-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            position: relative;
+        }
+        
+        /* Split screen layout for customization and preview */
+        .split-screen-container {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .split-screen-container.show {
+            display: block;
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        .split-screen-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .customization-panel {
+            width: 40%;
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            max-height: 85vh;
+        }
+        
+        .preview-panel {
+            width: 60%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Real-time preview indicator */
+        .real-time-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .real-time-indicator .indicator-dot {
+            width: 10px;
+            height: 10px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        /* Upload Section Styles */
+        .uploaded-images-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .uploaded-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .uploaded-image-container {
+            position: relative;
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        
+        .uploaded-image-container:hover {
+            transform: scale(1.02);
+        }
+        
+        .uploaded-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .uploaded-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding: 10px;
+        }
+        
+        .uploaded-image-container:hover .uploaded-image-overlay {
+            opacity: 1;
+        }
+        
+        .uploaded-image-filename {
+            font-size: 12px;
+            text-align: center;
+            word-break: break-all;
+            margin-bottom: 10px;
+            max-height: 40px;
+            overflow: hidden;
+        }
+        
+        .uploaded-image-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-btn, .remove-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.2s;
+        }
+        
+        .view-btn {
+            background: #667eea;
+            color: white;
+        }
+        
+        .view-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .remove-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .uploaded-image-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .upload-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-button:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        /* Grid Controls */
+        .grid-controls {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .grid-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .grid-input label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .grid-input input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .auto-adjust-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* --- MODIFIED STYLES FOR SECTION 3 --- */
+        .arrange-images-layout {
+            display: flex;
+            gap: 20px; 
+            align-items: flex-start; 
+        }
+
+        .staging-column {
+            width: 300px; 
+            flex-shrink: 0; 
+        }
+
+        .grid-column {
+            flex-grow: 1; 
+            min-width: 0; 
+        }
+
+        #image-staging { 
+            min-height: 120px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 15px; 
+            background: #fafafa;
+            max-height: 60vh; 
+            overflow-y: auto; 
+        }
+        
+        .staging-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; 
+            justify-content: flex-start; 
+        }
+        
+        .staging-image {
+            width: 80px;  
+            height: 80px; 
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: grab;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .staging-image:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+        
+        .staging-image.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .staging-image-number {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: #333;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        /* Grid Container */
+        .grid-container {
+            display: grid;
+            gap: 8px; 
+            overflow: visible; 
+        }
+        
+        .grid-cell {
+            aspect-ratio: 1;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 80px; 
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+        
+        .grid-cell:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .grid-cell.occupied {
+            background: transparent;
+            border-style: solid;
+            border-color: #28a745;
+        }
+        
+        .grid-cell.drop-target {
+            border-color: #667eea;
+            background: #e8f0fe;
+            transform: scale(1.02);
+        }
+        
+        .grid-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .grid-cell-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .grid-cell:hover .remove-image {
+            opacity: 1;
+        }
+        
+        /* Preview canvas in split screen */
+        .split-screen .preview-canvas { 
+            max-width: 100%;
+            max-height: 75vh;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Hide original sections when in split screen mode */
+        .hide-when-split {
+            display: none !important;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Preview */
+        .preview-section {
+            text-align: center;
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .preview-canvas { /* General preview canvas style */
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Accordion Item Styles - New Cards */
+        .accordion-container {
+            margin-bottom: 20px;
+        }
+        
+        .accordion-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background: white;
+        }
+        
+        .accordion-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .accordion-header:hover {
+            background: #f1f5f9;
+        }
+        
+        .accordion-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #334155;
+        }
+        
+        .accordion-toggle {
+            font-size: 18px;
+            color: #64748b;
+            transition: transform 0.3s;
+        }
+        
+        .accordion-item.active .accordion-toggle {
+            transform: rotate(45deg);
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 15px;
+        }
+        
+        .accordion-item.active .accordion-content {
+            max-height: 1500px; /* Increased to accommodate new DPI option */
+            padding: 15px;
+        }
+        
+        /* Form controls styling for accordion panel */
+        .customization-panel .option-card {
+            background: white;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .customization-panel .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .customization-panel .option-card h4 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #495057;
+            font-size: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+        
+        .customization-panel .accordion-content label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .customization-panel .accordion-content select,
+        .customization-panel .accordion-content input[type="text"],
+        .customization-panel .accordion-content input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+            background: #fff;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        
+        .customization-panel .accordion-content select:focus,
+        .customization-panel .accordion-content input[type="text"]:focus,
+        .customization-panel .accordion-content input[type="number"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            margin-top: 5px;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .value-display {
+            text-align: right;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .checkbox-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        .checkbox-row label {
+            margin: 0;
+            font-weight: normal;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .color-picker-container input[type="color"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 0;
+            background-color: transparent;
+        }
+        
+        .color-picker-container input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-picker-container input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 5px;
+        }
+        
+        .color-picker-container input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 5px;
+        }
+
+        .color-hex-input {
+            flex: 1;
+            font-family: monospace;
+        }
+        
+        .conditional-options {
+            margin-left: 15px;
+            padding-left: 15px;
+            border-left: 2px solid #e2e8f0;
+            margin-top: 10px;
+            opacity: 1;
+        }
+        
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 20px 0;
+        }
+        
+        .option-description {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        .input-group label {
+            font-size: 13px;
+        }
+        
+        /* Mode Toggle Switch */
+        .mode-toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .toggle-label {
+            font-weight: 600;
+            color: #64748b;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e2e8f0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        .basic-highlight {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .advanced-highlight {
+            color: #6366f1;
+            font-weight: 600;
+        }
+        
+        /* Presets styling */
+        .presets-container {
+            margin-top: 10px;
+        }
+        
+        .preset-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .preset-controls input {
+            flex: 1;
+        }
+        
+        .preset-btn {
+            padding: 8px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .preset-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .preset-list {
+            margin-bottom: 20px;
+        }
+        
+        .preset-list h4 {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        
+        .empty-presets-message {
+            font-size: 13px;
+            color: #94a3b8;
+            font-style: italic;
+            padding: 10px 0;
+        }
+        
+        #user-presets, #builtin-presets {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        #user-presets li, #builtin-presets li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        #user-presets li:last-child, #builtin-presets li:last-child {
+            border-bottom: none;
+        }
+        
+        .preset-name {
+            font-size: 14px;
+            color: #334155;
+        }
+        
+        .preset-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .preset-action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .apply-btn {
+            background: #10b981;
+            color: white;
+        }
+        .apply-btn:hover {
+            background: #0d9268;
+        }
+        
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+        .delete-btn:hover {
+            background: #d83a3a;
+        }
+        
+        /* For better mobile experience */
+        @media (max-width: 1024px) {
+            .split-screen-content {
+                flex-direction: column;
+            }
+            
+            .customization-panel,
+            .preview-panel {
+                width: 100%;
+            }
+            
+            .customization-panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                max-height: none;
+            }
+        }
+        
+        @media (max-width: 900px) { 
+            .arrange-images-layout {
+                flex-direction: column;
+                align-items: stretch; 
+            }
+            .staging-column {
+                width: 100%;
+                margin-bottom: 20px; 
+            }
+            #image-staging {
+                max-height: 300px; 
+            }
+            .grid-column {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .grid-cell {
+                min-height: 70px; 
+            }
+            .staging-image {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .preset-controls {
+                flex-direction: column;
+            }
+            
+            .accordion-header h3 {
+                font-size: 15px;
+            }
+            
+            .customization-panel {
+                max-height: none;
+            }
+            
+            .mode-toggle-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Ultimate Image Grid Maker</h1>
+        <p>Create beautiful image grids with drag-and-drop placement and advanced customization</p>
+        <div class="version-badge">v1.0.1</div> <!-- Version incremented -->
+    </div>
+
+    <!-- Image View Modal -->
+    <div class="image-modal" id="image-modal">
+        <button class="image-modal-close" onclick="closeImageModal()">×</button>
+        <img id="modal-image" class="image-modal-content">
+    </div>
+
+    <!-- Upload Section -->
+    <div class="container">
+        <div class="section">
+            <div class="section-title">1. Upload Images</div>
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+                <button class="upload-button" onclick="document.getElementById('file-input').click()">
+                    📷 Choose Images
+                </button>
+                <p style="margin-top: 10px; color: #666;">
+                    Click to select or drag and drop images here
+                </p>
+            </div>
+
+            <div class="uploaded-images-section" id="uploaded-images-section" style="display: none;">
+                <h3 class="section-title">
+                    Available Images (<span id="image-count">0</span>)
+                </h3>
+                <div class="uploaded-images-grid" id="uploaded-images-grid">
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid Configuration -->
+        <div class="section">
+            <div class="section-title">2. Configure Grid</div>
+            <div class="grid-controls">
+                <div class="grid-input">
+                    <label for="rows">Rows:</label>
+                    <input type="number" id="rows" min="1" value="2">
+                </div>
+                <div class="grid-input">
+                    <label for="cols">Columns:</label>
+                    <input type="number" id="cols" min="1" value="2">
+                </div>
+                <button class="auto-adjust-btn" id="auto-adjust">Auto-Adjust Grid</button>
+            </div>
+        </div>
+
+        <!-- Image Staging Area & Grid Container -->
+        <div class="section">
+            <div class="section-title">3. Arrange Images</div>
+            <div class="arrange-images-layout">
+                <div class="staging-column">
+                    <div class="image-staging" id="image-staging">
+                        <p id="staging-help" style="color: #666; margin: 0;">
+                            Upload images to start arranging them
+                        </p>
+                        <div class="staging-images" id="staging-images"></div>
+                    </div>
+                </div>
+                <div class="grid-column">
+                    <div class="grid-container" id="grid-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="preview-btn" disabled>Customize & Preview</button>
+            <button class="btn btn-success" id="download-btn" disabled>Download Image</button>
+        </div>
+    </div>
+
+    <!-- Split Screen Container for Customization and Preview -->
+    <div class="split-screen-container" id="split-screen-container">
+        <div class="split-screen-content">
+            <div class="customization-panel">
+                <h2 style="margin-top: 0; color: #2c3e50; font-size: 24px;">
+                    🎨 Customize Appearance
+                </h2>
+                
+                <div class="real-time-indicator">
+                    <div class="indicator-dot"></div>
+                    <span>Changes apply instantly!</span>
+                </div>
+                
+                <!-- Mode Toggle Switch -->
+                <div class="mode-toggle-container">
+                    <span class="toggle-label basic-highlight">Basic</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label advanced-highlight">Advanced</span>
+                </div>
+                
+                <!-- Accordion UI for better organization -->
+                <div class="accordion-container">
+                    <!-- Basic Layout Section -->
+                    <div class="accordion-item active">
+                        <div class="accordion-header">
+                            <h3>📐 Layout & Spacing</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="option-card">
+                                <h4>Canvas & Grid Settings</h4>
+                                
+                                <label for="canvas-bg-color-split">Canvas Background Color:</label>
+                                <div class="color-picker-container">
+                                    <input type="color" id="canvas-bg-color-split" value="#ffffff">
+                                    <input type="text" id="canvas-bg-color-hex" value="#ffffff" class="color-hex-input">
+                                </div>
+                                
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="transparent-background-split">
+                                    <label for="transparent-background-split">Transparent background</label>
+                                </div>
+                                
+                                <label for="canvas-padding-split">Canvas Padding (px):</label>
+                                <input type="range" id="canvas-padding-split" min="0" max="100" value="20" class="slider">
+                                <div class="value-display"><span id="canvas-padding-value">20</span>px</div>
+                                
+                                <label for="spacing-split">Gap Between Images (px):</label>
+                                <input type="range" id="spacing-split" min="0" max="50" value="10" class="slider">
+                                <div class="value-display"><span id="spacing-value">10</span>px</div>
+                                
+                                <label for="last-row-alignment-split">Last Row Alignment:</label>
+                                <select id="last-row-alignment-split">
+                                    <option value="left">Left</option>
+                                    <option value="center" selected>Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Image Appearance</h4>
+                                
+                                <label for="image-fit-split">Image Fit:</label>
+                                <select id="image-fit-split">
+                                    <option value="cover" selected>Cover (Crop to Fill)</option>
+                                    <option value="contain">Contain (Show All)</option>
+                                </select>
+                                
+                                <label for="image-corner-radius-split">Image Corner Radius (px):</label>
+                                <input type="range" id="image-corner-radius-split" min="0" max="50" value="0" class="slider">
+                                <div class="value-display"><span id="image-corner-radius-value">0</span>px</div>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Aspect Ratio</h4>
+                                
+                                <label for="canvas-aspect-ratio-split">Output Aspect Ratio:</label>
+                                <select id="canvas-aspect-ratio-split">
+                                    <option value="auto" selected>Auto (from content)</option>
+                                    <option value="1:1">1:1 (Square)</option>
+                                    <option value="16:9">16:9 (Widescreen)</option>
+                                    <option value="9:16">9:16 (Portrait)</option>
+                                    <option value="4:3">4:3 (Standard)</option>
+                                    <option value="3:4">3:4 (Portrait Standard)</option>
+                                    <option value="3:2">3:2 (Classic Photo)</option>
+                                    <option value="2:3">2:3 (Portrait Photo)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Borders & Frames Section -->
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3>🖼️ Borders & Background</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="option-card">
+                                <h4>Border Settings</h4>
+                                
+                                <label for="border-style-split">Border Style:</label>
+                                <select id="border-style-split">
+                                    <option value="box">Box around each image</option>
+                                    <option value="lines">Dividing lines</option>
+                                    <option value="none">No borders</option>
+                                </select>
+                                
+                                <label for="border-width-split">Border Width (px):</label>
+                                <input type="range" id="border-width-split" min="0" max="20" value="2" class="slider">
+                                <div class="value-display"><span id="border-width-value">2</span>px</div>
+                                
+                                <label for="border-color-split">Border Color:</label>
+                                <div class="color-picker-container">
+                                    <input type="color" id="border-color-split" value="#000000">
+                                    <input type="text" id="border-color-hex" value="#000000" class="color-hex-input">
+                                </div>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Shadow Effects</h4>
+                                
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="enable-shadows-split">
+                                    <label for="enable-shadows-split">Add drop shadow to images</label>
+                                </div>
+                                
+                                <div id="shadow-options" class="conditional-options" style="display: none;">
+                                    <label for="shadow-depth-split">Shadow Blur (px):</label>
+                                    <input type="range" id="shadow-depth-split" min="1" max="30" value="10" class="slider">
+                                    <div class="value-display"><span id="shadow-depth-value">10</span>px</div>
+                                    
+                                    <label for="shadow-color-split">Shadow Color:</label>
+                                    <input type="color" id="shadow-color-split" value="#000000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Labels Section -->
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3>🏷️ Labels & Annotations</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="option-card">
+                                <h4>Label Settings</h4>
+                                
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="show-labels-split" checked>
+                                    <label for="show-labels-split">Show image number labels</label>
+                                </div>
+                                
+                                <div id="label-options" class="conditional-options" style="display: block;">
+                                    <label for="label-style-split">Label Style:</label>
+                                    <select id="label-style-split">
+                                        <option value="circle" selected>Circular</option>
+                                        <option value="square">Square</option>
+                                        <option value="pill">Pill shape</option>
+                                        <option value="minimal">Minimal (no background)</option>
+                                    </select>
+                                    
+                                    <label for="label-position-split">Label Position:</label>
+                                    <select id="label-position-split">
+                                        <option value="top-left" selected>Top Left</option>
+                                        <option value="top-right">Top Right</option>
+                                        <option value="bottom-left">Bottom Left</option>
+                                        <option value="bottom-right">Bottom Right</option>
+                                        <option value="center">Center</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Label Appearance</h4>
+                                
+                                <label for="label-font-split">Font Family:</label>
+                                <select id="label-font-split">
+                                    <option value="Arial, sans-serif" selected>Arial</option>
+                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                    <option value="'Courier New', monospace">Courier New</option>
+                                    <option value="Georgia, serif">Georgia</option>
+                                    <option value="Verdana, sans-serif">Verdana</option>
+                                </select>
+                                
+                                <label for="label-size-split">Label Size:</label>
+                                <select id="label-size-split">
+                                    <option value="auto" selected>Auto (scales with image)</option>
+                                    <option value="10">10px</option>
+                                    <option value="12">12px</option>
+                                    <option value="14">14px</option>
+                                    <option value="16">16px</option>
+                                    <option value="20">20px</option>
+                                    <option value="24">24px</option>
+                                </select>
+                                
+                                <label for="label-text-color-split">Label Text Color:</label>
+                                <input type="color" id="label-text-color-split" value="#ffffff">
+                                
+                                <label for="label-bg-color-split">Label Background Color:</label>
+                                <input type="color" id="label-bg-color-split" value="#000000">
+                                
+                                <label for="label-bg-opacity-split">Background Opacity (%):</label>
+                                <input type="range" id="label-bg-opacity-split" min="0" max="100" value="80" class="slider">
+                                <div class="value-display"><span id="label-opacity-value">80</span>%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Adjustments Section (Advanced Only) -->
+                    <div class="accordion-item advanced-only">
+                        <div class="accordion-header">
+                            <h3>🎚️ Image Adjustments</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="option-card">
+                                <h4>Basic Adjustments</h4>
+                                <p class="option-description">Apply these adjustments to all images in the grid:</p>
+                                
+                                <label for="brightness-split">Brightness (%):</label>
+                                <input type="range" id="brightness-split" min="0" max="200" value="100" class="slider">
+                                <div class="value-display"><span id="brightness-value">100</span>%</div>
+                                
+                                <label for="contrast-split">Contrast (%):</label>
+                                <input type="range" id="contrast-split" min="0" max="200" value="100" class="slider">
+                                <div class="value-display"><span id="contrast-value">100</span>%</div>
+                                
+                                <label for="saturation-split">Saturation (%):</label>
+                                <input type="range" id="saturation-split" min="0" max="200" value="100" class="slider">
+                                <div class="value-display"><span id="saturation-value">100</span>%</div>
+                            </div>
+                            
+                            <div class="option-card">
+                                <h4>Effects</h4>
+                                
+                                <label for="grayscale-split">Grayscale (%):</label>
+                                <input type="range" id="grayscale-split" min="0" max="100" value="0" class="slider">
+                                <div class="value-display"><span id="grayscale-value">0</span>%</div>
+
+                                <label for="sepia-split">Sepia (%):</label>
+                                <input type="range" id="sepia-split" min="0" max="100" value="0" class="slider">
+                                <div class="value-display"><span id="sepia-value">0</span>%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Options Section -->
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3>💾 Export Options</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="option-card">
+                                <h4>Output Settings</h4>
+                                
+                                <label for="output-format-split">Output Format:</label>
+                                <select id="output-format-split">
+                                    <option value="png" selected>PNG (lossless)</option>
+                                    <option value="jpeg">JPEG (smaller file)</option>
+                                    <option value="webp">WebP (modern format)</option>
+                                </select>
+                                
+                                <div id="quality-option" class="conditional-options" style="display: none;">
+                                    <label for="output-quality-split">Quality (for JPEG/WebP):</label>
+                                    <input type="range" id="output-quality-split" min="0.1" max="1.0" value="0.9" step="0.01" class="slider">
+                                    <div class="value-display"><span id="quality-value">0.90</span></div>
+                                </div>
+
+                                <label for="output-dpi-split">Output DPI (for Print):</label>
+                                <select id="output-dpi-split">
+                                    <option value="auto" selected>Automatic (Screen Resolution - approx. 96 DPI)</option>
+                                    <option value="72">72 DPI (Web/Screen)</option>
+                                    <option value="96">96 DPI (Standard Screen)</option>
+                                    <option value="150">150 DPI (Newspaper/Draft)</option>
+                                    <option value="300">300 DPI (Publication Quality)</option>
+                                    <option value="400">400 DPI (High Quality Print)</option>
+                                    <option value="600">600 DPI (Fine Art/Photo Print)</option>
+                                </select>
+                                <p class="option-description">Higher DPI increases pixel density for printing, resulting in larger files. Quality is limited by source images.</p>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Custom Size</h4>
+                                
+                                <label for="output-size-split">Output Size Constraint:</label>
+                                <select id="output-size-split">
+                                    <option value="auto" selected>None (DPI determines size)</option>
+                                    <option value="custom">Constrain Max Dimensions (after DPI)</option>
+                                </select>
+                                
+                                <div id="custom-size-options" class="conditional-options" style="display: none;">
+                                    <div class="input-group">
+                                        <label for="custom-width-split">Max Width (px):</label>
+                                        <input type="number" id="custom-width-split" value="1200" min="100">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="custom-height-split">Max Height (px):</label>
+                                        <input type="number" id="custom-height-split" value="900" min="100">
+                                    </div>
+                                    <p class="option-description">If DPI scaling results in dimensions larger than these, the image will be scaled down to fit.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="option-card advanced-only">
+                                <h4>Watermark</h4>
+                                
+                                <div class="checkbox-row">
+                                    <input type="checkbox" id="add-watermark-split">
+                                    <label for="add-watermark-split">Add watermark</label>
+                                </div>
+                                
+                                <div id="watermark-options" class="conditional-options" style="display: none;">
+                                    <label for="watermark-text-split">Watermark Text:</label>
+                                    <input type="text" id="watermark-text-split" placeholder="© Your Name">
+                                    
+                                    <label for="watermark-position-split">Position:</label>
+                                    <select id="watermark-position-split">
+                                        <option value="bottom-right" selected>Bottom Right</option>
+                                        <option value="bottom-left">Bottom Left</option>
+                                        <option value="top-right">Top Right</option>
+                                        <option value="top-left">Top Left</option>
+                                        <option value="center">Center</option>
+                                    </select>
+                                    
+                                    <label for="watermark-opacity-split">Opacity (%):</label>
+                                    <input type="range" id="watermark-opacity-split" min="10" max="100" value="30" class="slider">
+                                    <div class="value-display"><span id="watermark-opacity-value">30</span>%</div>
+
+                                    <label for="watermark-color-split">Text Color:</label>
+                                    <input type="color" id="watermark-color-split" value="#000000">
+
+                                    <label for="watermark-font-size-split">Font Size (px):</label>
+                                    <input type="number" id="watermark-font-size-split" value="20" min="8">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preset Management Section (Advanced Only) -->
+                    <div class="accordion-item advanced-only">
+                        <div class="accordion-header">
+                            <h3>⭐ Save & Load Presets</h3>
+                            <span class="accordion-toggle">+</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="presets-container">
+                                <div class="preset-controls">
+                                    <input type="text" id="preset-name" placeholder="Enter preset name">
+                                    <button class="preset-btn save-preset-btn">Save Current Settings</button>
+                                </div>
+                                
+                                <div class="preset-list">
+                                    <h4>Your Saved Presets</h4>
+                                    <div class="empty-presets-message">No presets saved yet</div>
+                                    <ul id="user-presets">
+                                        <!-- Preset items get added here -->
+                                    </ul>
+                                </div>
+                                
+                                <div class="preset-list">
+                                    <h4>Built-in Presets</h4>
+                                    <ul id="builtin-presets">
+                                        <!-- Built-in presets will be defined in JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons" style="margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="exitSplitScreen()">
+                        ← Back to Edit
+                    </button>
+                    <button class="btn btn-success" id="download-btn-split">
+                        💾 Download Image
+                    </button>
+                </div>
+            </div>
+            
+            <div class="preview-panel">
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">Live Preview</h2>
+                <canvas id="preview-canvas-split" class="preview-canvas"></canvas>
+                <p style="color: #666; margin-top: 15px; text-align: center;">
+                    Adjust settings on the left to see changes in real-time
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- Empty Cells Modal -->
+    <div class="modal" id="empty-cells-modal">
+        <div class="modal-content">
+            <h3>Empty Cells Warning</h3>
+            <p id="empty-cells-message"></p>
+            <div class="modal-buttons">
+                <button class="btn" style="background: #6c757d; color: white;" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-success" onclick="proceedWithEmptyCells()">Continue Anyway</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+        // Global state
+        let selectedFiles = [];
+        let gridImages = new Map(); // Stores { file: File, image: imageSrc, originalWidth, originalHeight }
+        let currentDraggedImage = null;
+        let isLivePreviewActive = false;
+        let customizationEnabled = false; // This flag indicates if the split-screen is active
+        let isAdvancedMode = false; // Track if we're in advanced mode
+        let activePreviewCanvas = null; // Will point to the active preview canvas
+        const BASE_DPI = 96; // Assumed DPI for the screen preview canvas
+        
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const uploadedImagesSection = document.getElementById('uploaded-images-section');
+        const uploadedImagesGrid = document.getElementById('uploaded-images-grid');
+        const imageCount = document.getElementById('image-count');
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const rowsInput = document.getElementById('rows');
+        const colsInput = document.getElementById('cols');
+        const autoAdjustBtn = document.getElementById('auto-adjust');
+        const stagingImages = document.getElementById('staging-images');
+        const gridContainer = document.getElementById('grid-container');
+        const previewBtn = document.getElementById('preview-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const emptyCellsModal = document.getElementById('empty-cells-modal');
+        const loading = document.getElementById('loading');
+        
+        // Split screen elements
+        const splitScreenContainer = document.getElementById('split-screen-container');
+        const previewCanvasSplit = document.getElementById('preview-canvas-split');
+        const downloadBtnSplit = document.getElementById('download-btn-split');
+        const modeToggle = document.getElementById('mode-toggle');
+        
+        // Customization controls
+        const canvasBgColorSplit = document.getElementById('canvas-bg-color-split');
+        const canvasBgColorHex = document.getElementById('canvas-bg-color-hex');
+        const transparentBackgroundSplit = document.getElementById('transparent-background-split');
+        const canvasPaddingSplit = document.getElementById('canvas-padding-split');
+        const spacingSplit = document.getElementById('spacing-split');
+        const lastRowAlignmentSplit = document.getElementById('last-row-alignment-split');
+        const imageFitSplit = document.getElementById('image-fit-split');
+        const imageCornerRadiusSplit = document.getElementById('image-corner-radius-split');
+        const canvasAspectRatioSplit = document.getElementById('canvas-aspect-ratio-split');
+        
+        const borderStyleSplit = document.getElementById('border-style-split');
+        const borderWidthSplit = document.getElementById('border-width-split');
+        const borderColorSplit = document.getElementById('border-color-split');
+        const borderColorHex = document.getElementById('border-color-hex');
+        const enableShadowsSplit = document.getElementById('enable-shadows-split');
+        const shadowDepthSplit = document.getElementById('shadow-depth-split');
+        const shadowColorSplit = document.getElementById('shadow-color-split');
+        const shadowOptionsDiv = document.getElementById('shadow-options');
+        
+        const showLabelsSplit = document.getElementById('show-labels-split');
+        const labelStyleSplit = document.getElementById('label-style-split');
+        const labelPositionSplit = document.getElementById('label-position-split');
+        const labelFontSplit = document.getElementById('label-font-split');
+        const labelSizeSplit = document.getElementById('label-size-split');
+        const labelTextColorSplit = document.getElementById('label-text-color-split');
+        const labelBgColorSplit = document.getElementById('label-bg-color-split');
+        const labelBgOpacitySplit = document.getElementById('label-bg-opacity-split');
+        
+        const brightnessSplit = document.getElementById('brightness-split');
+        const contrastSplit = document.getElementById('contrast-split');
+        const saturationSplit = document.getElementById('saturation-split');
+        const grayscaleSplit = document.getElementById('grayscale-split');
+        const sepiaSplit = document.getElementById('sepia-split');
+        
+        const outputFormatSplit = document.getElementById('output-format-split');
+        const outputQualitySplit = document.getElementById('output-quality-split');
+        const qualityOptionDiv = document.getElementById('quality-option');
+        const outputDpiSplit = document.getElementById('output-dpi-split'); // New DPI control
+        const outputSizeSplit = document.getElementById('output-size-split');
+        const customSizeOptionsDiv = document.getElementById('custom-size-options');
+        const customWidthSplit = document.getElementById('custom-width-split');
+        const customHeightSplit = document.getElementById('custom-height-split');
+        
+        const addWatermarkSplit = document.getElementById('add-watermark-split');
+        const watermarkOptionsDiv = document.getElementById('watermark-options');
+        const watermarkTextSplit = document.getElementById('watermark-text-split');
+        const watermarkPositionSplit = document.getElementById('watermark-position-split');
+        const watermarkOpacitySplit = document.getElementById('watermark-opacity-split');
+        const watermarkColorSplit = document.getElementById('watermark-color-split');
+        const watermarkFontSizeSplit = document.getElementById('watermark-font-size-split');
+        
+        // Store all customization control elements in an object for easier access in presets
+        const customizationControls = {
+            canvasBgColorSplit, transparentBackgroundSplit, canvasPaddingSplit, spacingSplit,
+            lastRowAlignmentSplit, imageFitSplit, imageCornerRadiusSplit, canvasAspectRatioSplit,
+            borderStyleSplit, borderWidthSplit, borderColorSplit, enableShadowsSplit, 
+            shadowDepthSplit, shadowColorSplit, showLabelsSplit, labelStyleSplit, 
+            labelPositionSplit, labelFontSplit, labelSizeSplit, labelTextColorSplit, 
+            labelBgColorSplit, labelBgOpacitySplit, brightnessSplit, contrastSplit, 
+            saturationSplit, grayscaleSplit, sepiaSplit, outputFormatSplit, outputQualitySplit, 
+            outputDpiSplit, // Added DPI control
+            outputSizeSplit, customWidthSplit, customHeightSplit, addWatermarkSplit,
+            watermarkTextSplit, watermarkPositionSplit, watermarkOpacitySplit, 
+            watermarkColorSplit, watermarkFontSizeSplit
+        };
+
+        // Mode Toggling - Show/Hide Advanced Options
+        modeToggle.addEventListener('change', function() {
+            isAdvancedMode = this.checked;
+            updateModeDisplay();
+            if (customizationEnabled) handleCustomizationChange();
+        });
+        
+        function updateModeDisplay() {
+            document.querySelectorAll('.advanced-only').forEach(el => {
+                if (isAdvancedMode) {
+                    el.style.display = el.tagName === 'DIV' ? 'block' : 
+                                      (el.tagName === 'OPTION' ? '' : 'flex');
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+        
+        // Event listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        rowsInput.addEventListener('change', updateGrid);
+        colsInput.addEventListener('change', updateGrid);
+        autoAdjustBtn.addEventListener('click', autoAdjustGrid);
+        previewBtn.addEventListener('click', showPreview);
+        downloadBtn.addEventListener('click', () => downloadImage(previewCanvasSplit));
+        downloadBtnSplit.addEventListener('click', () => downloadImage(previewCanvasSplit));
+        
+        function initializeCustomizationListeners() {
+            // Add listeners for all customization controls
+            Object.values(customizationControls).forEach(control => {
+                if (control) { // Check if element exists
+                    const eventType = (control.type === 'range' || control.type === 'color' || control.type === 'text' || control.type === 'number') ? 'input' : 'change';
+                    control.addEventListener(eventType, handleCustomizationChange);
+                }
+            });
+            
+            // Special case listeners for conditional displays
+            if (enableShadowsSplit) {
+                enableShadowsSplit.addEventListener('change', function() {
+                    if (shadowOptionsDiv) shadowOptionsDiv.style.display = this.checked ? 'block' : 'none';
+                    handleCustomizationChange();
+                });
+            }
+            
+            if (showLabelsSplit) {
+                showLabelsSplit.addEventListener('change', function() {
+                    const labelOptionsDiv = document.getElementById('label-options');
+                    if (labelOptionsDiv) labelOptionsDiv.style.display = this.checked ? 'block' : 'none';
+                    handleCustomizationChange();
+                });
+            }
+            
+            if (outputFormatSplit) {
+                outputFormatSplit.addEventListener('change', function() {
+                    if (qualityOptionDiv) {
+                        qualityOptionDiv.style.display = (this.value === 'jpeg' || this.value === 'webp') ? 'block' : 'none';
+                    }
+                    handleCustomizationChange();
+                });
+            }
+            
+            if (outputSizeSplit) {
+                outputSizeSplit.addEventListener('change', function() {
+                    if (customSizeOptionsDiv) {
+                        customSizeOptionsDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+                    }
+                    handleCustomizationChange();
+                });
+            }
+            
+            if (addWatermarkSplit) {
+                addWatermarkSplit.addEventListener('change', function() {
+                    if (watermarkOptionsDiv) {
+                        watermarkOptionsDiv.style.display = this.checked ? 'block' : 'none';
+                    }
+                    handleCustomizationChange();
+                });
+            }
+            
+            // Color hex input syncing
+            canvasBgColorSplit.addEventListener('input', function() {
+                canvasBgColorHex.value = this.value.toLowerCase();
+                handleCustomizationChange();
+            });
+            
+            canvasBgColorHex.addEventListener('input', function() {
+                if (/^#[0-9a-f]{6}$/i.test(this.value)) {
+                    canvasBgColorSplit.value = this.value;
+                    handleCustomizationChange();
+                }
+            });
+            
+            borderColorSplit.addEventListener('input', function() {
+                borderColorHex.value = this.value.toLowerCase();
+                handleCustomizationChange();
+            });
+            
+            borderColorHex.addEventListener('input', function() {
+                if (/^#[0-9a-f]{6}$/i.test(this.value)) {
+                    borderColorSplit.value = this.value;
+                    handleCustomizationChange();
+                }
+            });
+            
+            // Setup slider value displays
+            setupSliderValueDisplay('canvas-padding-split', 'canvas-padding-value');
+            setupSliderValueDisplay('spacing-split', 'spacing-value');
+            setupSliderValueDisplay('image-corner-radius-split', 'image-corner-radius-value');
+            setupSliderValueDisplay('border-width-split', 'border-width-value');
+            setupSliderValueDisplay('shadow-depth-split', 'shadow-depth-value');
+            setupSliderValueDisplay('label-bg-opacity-split', 'label-opacity-value');
+            setupSliderValueDisplay('brightness-split', 'brightness-value');
+            setupSliderValueDisplay('contrast-split', 'contrast-value');
+            setupSliderValueDisplay('saturation-split', 'saturation-value');
+            setupSliderValueDisplay('grayscale-split', 'grayscale-value');
+            setupSliderValueDisplay('sepia-split', 'sepia-value');
+            setupSliderValueDisplay('output-quality-split', 'quality-value', true);
+            setupSliderValueDisplay('watermark-opacity-split', 'watermark-opacity-value');
+        }
+        
+        function setupSliderValueDisplay(sliderId, valueDisplayId, isFloat = false) {
+            const slider = document.getElementById(sliderId);
+            const displaySpan = document.getElementById(valueDisplayId);
+            if (slider && displaySpan) {
+                const updateDisplay = () => {
+                    let value = slider.value;
+                    if (isFloat) value = parseFloat(value).toFixed(2);
+                    displaySpan.textContent = value;
+                };
+                updateDisplay(); // Initial display
+                slider.addEventListener('input', updateDisplay);
+            }
+        }
+        
+        async function handleCustomizationChange() {
+            // DPI change does not re-render the live preview, only affects download.
+            // All other changes will re-render.
+            if (customizationEnabled && gridImages.size > 0) {
+                 // Check if the event target is NOT the DPI dropdown
+                if (!event || (event && event.target && event.target.id !== 'output-dpi-split')) {
+                    await generatePreview();
+                }
+            }
+        }
+        
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+        
+        let alertShownForInvalidFiles = false;
+        async function processFiles(files) {
+            const newImageFiles = files.filter(file => 
+                file.type.startsWith('image/') && 
+                !selectedFiles.some(sf => sf.name === file.name && sf.size === file.size)
+            );
+
+            if (newImageFiles.length === 0) {
+                if (files.length > 0 && !selectedFiles.some(sf => files.find(f => f.name === sf.name && f.size === sf.size))) {
+                    if (!alertShownForInvalidFiles) {
+                        alert('Please select valid image files or new image files.');
+                        alertShownForInvalidFiles = true;
+                        setTimeout(() => alertShownForInvalidFiles = false, 100);
+                    }
+                }
+                if (selectedFiles.length === 0) uploadedImagesSection.style.display = 'none';
+                return;
+            }
+
+            const loadPromises = newImageFiles.map(file => {
+                return new Promise(async (resolve) => {
+                    const imageUrl = URL.createObjectURL(file);
+                    try {
+                        const img = await loadImage(imageUrl);
+                        resolve({ file, imageUrl, originalWidth: img.naturalWidth || img.width, originalHeight: img.naturalHeight || img.height });
+                    } catch (err) {
+                        console.warn(`Could not load image ${file.name} for dimension checking, skipping.`, err);
+                        resolve(null);
+                    }
+                });
+            });
+
+            const loadedFileObjects = (await Promise.all(loadPromises)).filter(obj => obj !== null);
+            selectedFiles.push(...loadedFileObjects.map(obj => obj.file));
+            
+            updateUploadedImagesPreview();
+            
+            stagingImages.innerHTML = '';
+            document.getElementById('staging-help').style.display = selectedFiles.length > 0 ? 'none' : 'block';
+            
+            selectedFiles.forEach((file, index) => {
+                const imgEl = document.createElement('img');
+                imgEl.className = 'staging-image';
+                const tempUrl = URL.createObjectURL(file);
+                imgEl.src = tempUrl;
+                imgEl.draggable = true;
+                imgEl.dataset.index = index;
+                imgEl.dataset.filename = file.name;
+                
+                const number = document.createElement('div');
+                number.className = 'staging-image-number';
+                number.textContent = index + 1;
+                
+                const container = document.createElement('div');
+                container.style.position = 'relative';
+                container.appendChild(imgEl);
+                container.appendChild(number);
+                
+                imgEl.addEventListener('dragstart', handleStagingDragStart);
+                imgEl.addEventListener('dragend', handleStagingDragEnd);
+                
+                stagingImages.appendChild(container);
+            });
+            
+            if (loadedFileObjects.length > 0) autoAdjustGrid();
+            updateButtons();
+        }
+        
+        function updateUploadedImagesPreview() {
+            if (!uploadedImagesGrid || !imageCount || !uploadedImagesSection) return;
+            uploadedImagesGrid.innerHTML = '';
+            imageCount.textContent = selectedFiles.length;
+            
+            if (selectedFiles.length > 0) {
+                uploadedImagesSection.style.display = 'block';
+                selectedFiles.forEach((file, index) => {
+                    const container = document.createElement('div');
+                    container.className = 'uploaded-image-container';
+                    container.dataset.index = index;
+                    
+                    const img = document.createElement('img');
+                    img.className = 'uploaded-image';
+                    img.src = URL.createObjectURL(file);
+                    
+                    const number = document.createElement('div');
+                    number.className = 'uploaded-image-number';
+                    number.textContent = index + 1;
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'uploaded-image-overlay';
+                    
+                    const filename = document.createElement('div');
+                    filename.className = 'uploaded-image-filename';
+                    filename.textContent = file.name;
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'uploaded-image-actions';
+                    
+                    const viewBtnEl = document.createElement('button');
+                    viewBtnEl.className = 'view-btn';
+                    viewBtnEl.textContent = 'View';
+                    viewBtnEl.onclick = () => viewImage(img.src, file.name);
+                    
+                    const removeBtnElement = document.createElement('button');
+                    removeBtnElement.className = 'remove-btn';
+                    removeBtnElement.textContent = 'Remove';
+                    removeBtnElement.onclick = (event) => {
+                        event.stopPropagation();
+                        removeUploadedImage(index);
+                    };
+                    
+                    actions.appendChild(viewBtnEl);
+                    actions.appendChild(removeBtnElement);
+                    overlay.appendChild(filename);
+                    overlay.appendChild(actions);
+                    container.appendChild(img);
+                    container.appendChild(number);
+                    container.appendChild(overlay);
+                    uploadedImagesGrid.appendChild(container);
+                });
+            } else {
+                uploadedImagesSection.style.display = 'none';
+                document.getElementById('staging-help').style.display = 'block';
+            }
+        }
+        
+        function viewImage(src, filename) {
+            modalImage.src = src;
+            modalImage.alt = filename;
+            imageModal.style.display = 'flex';
+        }
+        
+        function closeImageModal() {
+            imageModal.style.display = 'none';
+        }
+        
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) closeImageModal();
+        });
+        
+        function removeUploadedImage(indexToRemove) {
+            if (indexToRemove < 0 || indexToRemove >= selectedFiles.length) return;
+
+            const removedFile = selectedFiles[indexToRemove];
+            selectedFiles.splice(indexToRemove, 1);
+
+            // Remove from gridImages if present
+            let positionsToRemove = [];
+            gridImages.forEach((imageData, position) => {
+                if (imageData.file.name === removedFile.name && imageData.file.size === removedFile.size) {
+                    positionsToRemove.push(position);
+                }
+            });
+            positionsToRemove.forEach(pos => removeImageFromGrid(pos));
+            
+            updateUploadedImagesPreview();
+            
+            // Rebuild staging images
+            stagingImages.innerHTML = ''; 
+            if (selectedFiles.length > 0) {
+                document.getElementById('staging-help').style.display = 'none';
+                selectedFiles.forEach((file, index) => {
+                    const img = document.createElement('img');
+                    img.className = 'staging-image';
+                    img.src = URL.createObjectURL(file);
+                    img.draggable = true;
+                    img.dataset.index = index;
+                    img.dataset.filename = file.name;
+                    const number = document.createElement('div');
+                    number.className = 'staging-image-number';
+                    number.textContent = index + 1;
+                    const container = document.createElement('div');
+                    container.style.position = 'relative';
+                    container.appendChild(img);
+                    container.appendChild(number);
+                    img.addEventListener('dragstart', handleStagingDragStart);
+                    img.addEventListener('dragend', handleStagingDragEnd);
+                    stagingImages.appendChild(container);
+                });
+            } else {
+                document.getElementById('staging-help').style.display = 'block';
+            }
+            
+            updateGrid(); 
+            autoAdjustGrid(); 
+            updateButtons();
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+        }
+        
+        function updateGrid() {
+            const rows = parseInt(rowsInput.value);
+            const cols = parseInt(colsInput.value);
+            
+            if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) {
+                rowsInput.value = Math.max(1, parseInt(rowsInput.value) || 1);
+                colsInput.value = Math.max(1, parseInt(colsInput.value) || 1);
+                return;
+            }
+            
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            gridContainer.innerHTML = '';
+            
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.position = i;
+                const number = document.createElement('div');
+                number.className = 'grid-cell-number';
+                number.textContent = i + 1;
+                cell.appendChild(number);
+                cell.addEventListener('dragover', handleGridDragOver);
+                cell.addEventListener('dragleave', handleGridDragLeave);
+                cell.addEventListener('drop', handleGridDrop);
+                gridContainer.appendChild(cell);
+            }
+            restoreGridImages();
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+        }
+        
+        function autoAdjustGrid() {
+            if (selectedFiles.length === 0) {
+                rowsInput.value = 1;
+                colsInput.value = 1;
+                updateGrid();
+                return;
+            }
+            const numImages = selectedFiles.length;
+            let r, c;
+            c = Math.ceil(Math.sqrt(numImages));
+            r = Math.ceil(numImages / c);
+            if (numImages === 1) { r = 1; c = 1; }
+            else if (numImages === 2) { r = 1; c = 2; }
+            else if (numImages === 3) { r = 1; c = 3; }
+            rowsInput.value = r > 0 ? r : 1;
+            colsInput.value = c > 0 ? c : 1;
+            updateGrid();
+        }
+        
+        function handleStagingDragStart(e) {
+            const originalIndex = parseInt(e.target.dataset.index);
+            if (originalIndex < 0 || originalIndex >= selectedFiles.length) {
+                e.preventDefault();
+                return;
+            }
+            currentDraggedImage = {
+                file: selectedFiles[originalIndex],
+                src: e.target.src,
+                originalIndex: originalIndex 
+            };
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleStagingDragEnd(e) {
+            if (e.target) e.target.classList.remove('dragging');
+            currentDraggedImage = null;
+        }
+        
+        function handleGridDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (e.currentTarget.classList.contains('grid-cell')) {
+                e.currentTarget.classList.add('drop-target');
+            }
+        }
+        
+        function handleGridDragLeave(e) {
+            if (e.currentTarget.classList.contains('grid-cell')) {
+                e.currentTarget.classList.remove('drop-target');
+            }
+        }
+        
+        async function handleGridDrop(e) {
+            e.preventDefault();
+            if (e.currentTarget.classList.contains('grid-cell')) {
+                e.currentTarget.classList.remove('drop-target');
+            }
+            if (!currentDraggedImage || !currentDraggedImage.file) return;
+            
+            const position = parseInt(e.currentTarget.dataset.position);
+            const fileToPlace = currentDraggedImage.file;
+            const imageURL = URL.createObjectURL(fileToPlace);
+
+            try {
+                const imgObj = await loadImage(imageURL);
+                const imageData = {
+                    file: fileToPlace,
+                    image: imageURL,
+                    originalWidth: imgObj.naturalWidth || imgObj.width,
+                    originalHeight: imgObj.naturalHeight || imgObj.height
+                };
+                placeImageInGrid(position, imageData);
+            } catch (err) {
+                console.error("Error loading image for grid placement:", err);
+                alert(`Could not place image ${fileToPlace.name}. It might be corrupted or an unsupported format.`);
+            }
+        }
+        
+        function placeImageInGrid(position, imageData) {
+            const cell = gridContainer.querySelector(`.grid-cell[data-position="${position}"]`);
+            if (!cell) return;
+            
+            const cellNumber = cell.querySelector('.grid-cell-number');
+            cell.innerHTML = '';
+            if (cellNumber) cell.appendChild(cellNumber);
+
+            const img = document.createElement('img');
+            img.src = imageData.image;
+            
+            const removeBtn = document.createElement('div');
+            removeBtn.className = 'remove-image';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = (event) => {
+                event.stopPropagation();
+                removeImageFromGrid(position);
+            };
+            
+            cell.appendChild(img);
+            cell.appendChild(removeBtn);
+            cell.classList.add('occupied');
+            
+            gridImages.set(position, imageData);
+            updateButtons();
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+        }
+        
+        function removeImageFromGrid(position) {
+            const cell = gridContainer.querySelector(`.grid-cell[data-position="${position}"]`);
+            if (!cell) return;
+
+            const existingImageData = gridImages.get(position);
+            if (existingImageData && existingImageData.image && existingImageData.image.startsWith('blob:')) {
+                 URL.revokeObjectURL(existingImageData.image);
+            }
+
+            const img = cell.querySelector('img');
+            const removeBtn = cell.querySelector('.remove-image');
+            if (img) img.remove();
+            if (removeBtn) removeBtn.remove();
+            cell.classList.remove('occupied');
+            gridImages.delete(position);
+            updateButtons();
+            if (customizationEnabled) {
+                if (gridImages.size === 0) exitSplitScreen();
+                else handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+            }
+        }
+        
+        function restoreGridImages() {
+            gridImages.forEach((imageData, position) => {
+                const cell = gridContainer.querySelector(`.grid-cell[data-position="${position}"]`);
+                if (cell) {
+                    const cellNumber = cell.querySelector('.grid-cell-number');
+                    cell.innerHTML = '';
+                    if (cellNumber) cell.appendChild(cellNumber);
+                    const img = document.createElement('img');
+                    img.src = imageData.image;
+                    const removeBtn = document.createElement('div');
+                    removeBtn.className = 'remove-image';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        removeImageFromGrid(position);
+                    };
+                    cell.appendChild(img);
+                    cell.appendChild(removeBtn);
+                    cell.classList.add('occupied');
+                } else {
+                    gridImages.delete(position);
+                }
+            });
+            // Clean up any 'occupied' classes on cells that no longer have images
+            const cells = gridContainer.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                const pos = parseInt(cell.dataset.position);
+                if (!gridImages.has(pos) && cell.classList.contains('occupied')) {
+                    cell.classList.remove('occupied');
+                    const img = cell.querySelector('img');
+                    if(img) img.remove();
+                    const removeBtn = cell.querySelector('.remove-image');
+                    if(removeBtn) removeBtn.remove();
+                }
+            });
+        }
+
+
+
+async function showPreview() {
+            if (gridImages.size === 0) {
+                alert("Please add some images to the grid before previewing.");
+                return;
+            }
+            
+            const configuredRows = parseInt(rowsInput.value);
+            const configuredCols = parseInt(colsInput.value);
+            const totalConfiguredCells = configuredRows * configuredCols;
+            
+            let maxPos = -1;
+            gridImages.forEach((val, key) => { if (key > maxPos) maxPos = key; });
+            const cellsToCheckForEmptiness = Math.min(totalConfiguredCells, maxPos + 1);
+            
+            let emptyInActiveRegionCount = 0;
+            for(let i = 0; i < cellsToCheckForEmptiness; i++) {
+                const r = Math.floor(i / configuredCols);
+                if (r < configuredRows && !gridImages.has(i)) emptyInActiveRegionCount++;
+            }
+
+            if (emptyInActiveRegionCount > 0) {
+                document.getElementById('empty-cells-message').textContent = 
+                    `Your grid has ${emptyInActiveRegionCount} empty cell${emptyInActiveRegionCount > 1 ? 's' : ''} within the active area. Do you want to continue?`;
+                emptyCellsModal.style.display = 'flex';
+                return;
+            }
+            
+            await generatePreviewAndShowSplitScreen();
+        }
+        
+        function proceedWithEmptyCells() {
+            closeModal();
+            generatePreviewAndShowSplitScreen();
+        }
+        
+        async function generatePreviewAndShowSplitScreen() {
+            splitScreenContainer.classList.add('show');
+            customizationEnabled = true;
+            isLivePreviewActive = true;
+            activePreviewCanvas = previewCanvasSplit;
+            
+            document.querySelector('.container').classList.add('hide-when-split');
+            document.querySelector('.action-buttons:not(.customization-panel .action-buttons)').classList.add('hide-when-split');
+            
+            updateModeDisplay(); // Make sure advanced/basic mode is properly displayed
+            await generatePreview();
+            
+            setTimeout(() => {
+                splitScreenContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        
+        function exitSplitScreen() {
+            splitScreenContainer.classList.remove('show');
+            document.querySelector('.container').classList.remove('hide-when-split');
+            document.querySelector('.action-buttons:not(.customization-panel .action-buttons)').classList.remove('hide-when-split');
+            customizationEnabled = false;
+            isLivePreviewActive = false;
+            activePreviewCanvas = null;
+            updateButtons();
+        }
+        
+        async function generatePreview() {
+            if (!activePreviewCanvas) {
+                console.warn("generatePreview called without an active canvas target.");
+                return;
+            }
+            loading.style.display = 'block';
+            previewBtn.disabled = true;
+
+            try {
+                const options = {
+                    cols: parseInt(colsInput.value),
+                    canvasBgColor: canvasBgColorSplit.value,
+                    transparentBackground: transparentBackgroundSplit.checked,
+                    canvasPadding: parseInt(canvasPaddingSplit.value) || 0,
+                    spacing: parseInt(spacingSplit.value) || 0,
+                    lastRowAlignment: lastRowAlignmentSplit.value,
+                    imageFit: imageFitSplit.value,
+                    imageCornerRadius: parseInt(imageCornerRadiusSplit.value) || 0,
+                    canvasAspectRatio: canvasAspectRatioSplit.value,
+                    borderStyle: borderStyleSplit.value,
+                    borderWidth: parseInt(borderWidthSplit.value) || 0,
+                    borderColor: borderColorSplit.value,
+                    enableShadows: enableShadowsSplit.checked,
+                    shadowDepth: parseInt(shadowDepthSplit.value) || 0,
+                    shadowColor: shadowColorSplit.value,
+                    showLabels: showLabelsSplit.checked,
+                    labelStyle: labelStyleSplit.value,
+                    labelPosition: labelPositionSplit.value,
+                    labelFont: labelFontSplit.value,
+                    labelSize: labelSizeSplit.value,
+                    labelTextColor: labelTextColorSplit.value,
+                    labelBgColor: labelBgColorSplit.value,
+                    labelBgOpacity: parseInt(labelBgOpacitySplit.value) / 100,
+                    brightness: parseInt(brightnessSplit.value),
+                    contrast: parseInt(contrastSplit.value),
+                    saturation: parseInt(saturationSplit.value),
+                    grayscale: parseInt(grayscaleSplit.value),
+                    sepia: parseInt(sepiaSplit.value),
+                };
+
+                const finalCanvas = await createMergedCanvas(options);
+                
+                if (finalCanvas.width === 0 || finalCanvas.height === 0) {
+                    if (gridImages.size > 0) alert("Could not generate preview. No images were processed for the canvas.");
+                    activePreviewCanvas.style.display = 'none';
+                } else {
+                    activePreviewCanvas.width = finalCanvas.width;
+                    activePreviewCanvas.height = finalCanvas.height;
+                    const ctx = activePreviewCanvas.getContext('2d');
+                    ctx.clearRect(0,0, activePreviewCanvas.width, activePreviewCanvas.height);
+                    ctx.drawImage(finalCanvas, 0, 0);
+                    activePreviewCanvas.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error generating preview:', error);
+                alert(`Error generating preview: ${error.message}. Check console for details.`);
+                if(activePreviewCanvas) activePreviewCanvas.style.display = 'none';
+            } finally {
+                loading.style.display = 'none';
+                updateButtons();
+            }
+        }
+        
+        async function downloadImage(sourceCanvas) {
+            if (!sourceCanvas || sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+                alert("No preview generated to download. Please click 'Customize & Preview' first.");
+                if (customizationEnabled && gridImages.size > 0 && !isLivePreviewActive) {
+                    await generatePreviewAndShowSplitScreen();
+                    if (activePreviewCanvas && activePreviewCanvas.width > 0 && activePreviewCanvas.height > 0) {
+                        performDownload(activePreviewCanvas);
+                    }
+                }
+                return;
+            }
+            performDownload(sourceCanvas);
+        }
+
+        function performDownload(canvasToDownload) {
+            const outputFormat = outputFormatSplit.value;
+            const quality = parseFloat(outputQualitySplit.value);
+            const selectedDPIValue = outputDpiSplit.value;
+            let mimeType = `image/${outputFormat}`;
+            let filename = `image_grid.${outputFormat}`;
+
+            let workingCanvas = canvasToDownload;
+
+            // 1. Apply DPI Scaling (if not 'auto')
+            if (selectedDPIValue !== 'auto') {
+                const targetDPI = parseInt(selectedDPIValue);
+                if (!isNaN(targetDPI) && targetDPI > 0 && targetDPI !== BASE_DPI) {
+                    const scaleFactor = targetDPI / BASE_DPI;
+                    const newWidth = Math.round(canvasToDownload.width * scaleFactor);
+                    const newHeight = Math.round(canvasToDownload.height * scaleFactor);
+
+                    const dpiScaledCanvas = document.createElement('canvas');
+                    dpiScaledCanvas.width = newWidth;
+                    dpiScaledCanvas.height = newHeight;
+                    const dpiCtx = dpiScaledCanvas.getContext('2d');
+                    dpiCtx.imageSmoothingQuality = 'high'; // Prefer quality for scaling
+                    dpiCtx.drawImage(canvasToDownload, 0, 0, newWidth, newHeight);
+                    workingCanvas = dpiScaledCanvas;
+                }
+            }
+            
+            // 2. Handle custom output size constraint (applied *after* DPI scaling)
+            if (outputSizeSplit.value === 'custom') {
+                const maxWidth = parseInt(customWidthSplit.value) || workingCanvas.width;
+                const maxHeight = parseInt(customHeightSplit.value) || workingCanvas.height;
+                
+                let newWidth = workingCanvas.width;
+                let newHeight = workingCanvas.height;
+                const aspectRatio = newWidth / newHeight;
+
+                if (newWidth > maxWidth) {
+                    newWidth = maxWidth;
+                    newHeight = newWidth / aspectRatio;
+                }
+                if (newHeight > maxHeight) {
+                    newHeight = maxHeight;
+                    newWidth = newHeight * aspectRatio;
+                }
+                
+                // Only rescale if necessary
+                if (newWidth !== workingCanvas.width || newHeight !== workingCanvas.height) {
+                    const constrainedCanvas = document.createElement('canvas');
+                    constrainedCanvas.width = Math.round(newWidth);
+                    constrainedCanvas.height = Math.round(newHeight);
+                    const constrainedCtx = constrainedCanvas.getContext('2d');
+                    constrainedCtx.imageSmoothingQuality = 'high';
+                    constrainedCtx.drawImage(workingCanvas, 0, 0, constrainedCanvas.width, constrainedCanvas.height);
+                    workingCanvas = constrainedCanvas;
+                }
+            }
+
+            // 3. Add watermark if enabled (applied to the potentially scaled/constrained canvas)
+            if (addWatermarkSplit.checked && watermarkTextSplit.value.trim() !== '') {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = workingCanvas.width;
+                tempCanvas.height = workingCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.imageSmoothingQuality = 'high';
+                tempCtx.drawImage(workingCanvas, 0, 0);
+
+                drawWatermark(tempCtx, watermarkTextSplit.value.trim(), {
+                    position: watermarkPositionSplit.value,
+                    opacity: parseInt(watermarkOpacitySplit.value) / 100,
+                    color: watermarkColorSplit.value,
+                    fontSize: parseInt(watermarkFontSizeSplit.value),
+                    fontFamily: 'Arial, sans-serif'
+                });
+                workingCanvas = tempCanvas;
+            }
+
+            const dataURL = (outputFormat === 'png') ? workingCanvas.toDataURL(mimeType) : workingCanvas.toDataURL(mimeType, quality);
+            
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataURL;
+            link.click();
+        }
+
+        function drawWatermark(ctx, text, options) {
+            ctx.save();
+            ctx.font = `${options.fontSize}px ${options.fontFamily || 'Arial, sans-serif'}`;
+            ctx.fillStyle = options.color || '#000000';
+            ctx.globalAlpha = options.opacity || 0.3;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const metrics = ctx.measureText(text);
+            // const textWidth = metrics.width; // Not strictly needed for centering
+            // const textHeight = options.fontSize; // Not strictly needed for centering
+
+            const padding = options.fontSize * 0.5;
+            let x, y;
+
+            switch (options.position) {
+                case 'top-left':
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                    x = padding; y = padding;
+                    break;
+                case 'top-right':
+                    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+                    x = ctx.canvas.width - padding; y = padding;
+                    break;
+                case 'bottom-left':
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+                    x = padding; y = ctx.canvas.height - padding;
+                    break;
+                case 'center':
+                    x = ctx.canvas.width / 2; y = ctx.canvas.height / 2;
+                    break;
+                case 'bottom-right':
+                default:
+                    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+                    x = ctx.canvas.width - padding; y = ctx.canvas.height - padding;
+                    break;
+            }
+            ctx.fillText(text, x, y);
+            ctx.restore();
+        }
+        
+        function closeModal() {
+            emptyCellsModal.style.display = 'none';
+        }
+        
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = (err) => {
+                    console.error(`Failed to load image: ${src.substring(0,100)}...`, err);
+                    reject(new Error(`Failed to load image: ${src.substring(0,50)}...`));
+                };
+                img.src = src;
+            });
+        }
+        
+        async function createMergedCanvas(options) {
+            const { 
+                cols, canvasBgColor, transparentBackground, canvasPadding, spacing, 
+                lastRowAlignment, imageFit, imageCornerRadius, canvasAspectRatio,
+                borderStyle, borderWidth, borderColor, enableShadows, shadowDepth, shadowColor,
+                showLabels, labelStyle, labelPosition, labelFont, labelSize, labelTextColor, 
+                labelBgColor, labelBgOpacity, brightness, contrast, saturation, grayscale, sepia
+            } = options;
+            
+            const imageLoadPromises = [];
+            gridImages.forEach((imageData, position) => {
+                imageLoadPromises.push(loadImage(imageData.image).then(img => ({
+                    img, 
+                    position, 
+                    originalWidth: imageData.originalWidth, 
+                    originalHeight: imageData.originalHeight
+                })));
+            });
+            
+            const loadedImageObjects = await Promise.all(imageLoadPromises);
+            
+            if (loadedImageObjects.length === 0) {
+                const emptyCanvas = document.createElement('canvas');
+                emptyCanvas.width = 0; emptyCanvas.height = 0;
+                return emptyCanvas;
+            }
+
+            // Determine cell size based on first image dimensions
+            let cellWidth = 0;
+            let cellHeight = 0;
+
+            if (loadedImageObjects.length > 0) {
+                const firstImageInGrid = loadedImageObjects.find(obj => gridImages.has(obj.position)) || loadedImageObjects[0];
+                cellWidth = firstImageInGrid.originalWidth || 300;
+                cellHeight = firstImageInGrid.originalHeight || 200;
+            }
+            if (cellWidth === 0 || cellHeight === 0) {
+                 cellWidth = 300; cellHeight = 200;
+            }
+
+            // Determine the actual number of rows used
+            let maxRowUsed = -1;
+            loadedImageObjects.forEach(obj => {
+                const r = Math.floor(obj.position / cols);
+                if (r > maxRowUsed) maxRowUsed = r;
+            });
+            const effectiveRows = maxRowUsed + 1;
+
+            // Calculate canvas dimensions
+            const outerPadding = canvasPadding;
+            const contentGridWidth = (cellWidth * cols) + (spacing * Math.max(0, cols - 1));
+            const contentGridHeight = (cellHeight * effectiveRows) + (spacing * Math.max(0, effectiveRows - 1));
+            
+            // Create the canvas
+            const canvasWidth = contentGridWidth + (outerPadding * 2);
+            const canvasHeight = contentGridHeight + (outerPadding * 2);
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth > 0 ? canvasWidth : 300;
+            canvas.height = canvasHeight > 0 ? canvasHeight : 200;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high'; // Prefer quality for initial render
+            
+            // Fill the background
+            if (!transparentBackground) {
+                ctx.fillStyle = canvasBgColor || '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Draw the images
+            for (let r_idx = 0; r_idx < effectiveRows; r_idx++) {
+                const imagesInThisRow = loadedImageObjects.filter(obj => Math.floor(obj.position / cols) === r_idx)
+                                       .sort((a, b) => (a.position % cols) - (b.position % cols));
+
+                // Handle last row alignment
+                let rowStartX = outerPadding;
+                if (r_idx === maxRowUsed && imagesInThisRow.length < cols && imagesInThisRow.length > 0) {
+                    const contentWidthThisRow = (imagesInThisRow.length * cellWidth) + (Math.max(0, imagesInThisRow.length - 1) * spacing);
+                    const totalWidthAvailableForCells = (cols * cellWidth) + (Math.max(0, cols - 1) * spacing);
+                    if (lastRowAlignment === 'center') {
+                        rowStartX += (totalWidthAvailableForCells - contentWidthThisRow) / 2;
+                    } else if (lastRowAlignment === 'right') {
+                         rowStartX += totalWidthAvailableForCells - contentWidthThisRow;
+                    }
+                }
+                
+                // Process each image in the row
+                imagesInThisRow.forEach((obj, colIndexInRow) => {
+                    const { img, position, originalWidth, originalHeight } = obj;
+                    const cellX = rowStartX + colIndexInRow * (cellWidth + spacing);
+                    const cellY = outerPadding + r_idx * (cellHeight + spacing);
+                    
+                    ctx.save();
+
+                    // Apply image adjustments
+                    let filterString = '';
+                    if (brightness !== 100) filterString += `brightness(${brightness}%) `;
+                    if (contrast !== 100) filterString += `contrast(${contrast}%) `;
+                    if (saturation !== 100) filterString += `saturate(${saturation}%) `;
+                    if (grayscale > 0) filterString += `grayscale(${grayscale}%) `;
+                    if (sepia > 0) filterString += `sepia(${sepia}%) `;
+                    if (filterString) ctx.filter = filterString.trim();
+
+                    // Add shadows
+                    if (enableShadows && shadowDepth > 0) {
+                        ctx.shadowColor = shadowColor;
+                        ctx.shadowBlur = shadowDepth;
+                        ctx.shadowOffsetX = shadowDepth / 4;
+                        ctx.shadowOffsetY = shadowDepth / 4;
+                    }
+
+                    // Apply rounded corners if needed
+                    if (imageCornerRadius > 0) {
+                        roundedRectPath(ctx, cellX, cellY, cellWidth, cellHeight, imageCornerRadius);
+                        ctx.clip();
+                    }
+                    
+                    // Draw the image with proper sizing based on imageFit
+                    let sx = 0, sy = 0, sWidth = originalWidth, sHeight = originalHeight;
+                    let dx = cellX, dy = cellY, dWidth = cellWidth, dHeight = cellHeight;
+
+                    const cellAspect = cellWidth / cellHeight;
+                    const imgAspect = originalWidth / originalHeight;
+
+                    if (imageFit === 'cover') {
+                        if (imgAspect > cellAspect) {
+                            sHeight = originalHeight;
+                            sWidth = sHeight * cellAspect;
+                            sx = (originalWidth - sWidth) / 2;
+                        } else {
+                            sWidth = originalWidth;
+                            sHeight = sWidth / cellAspect;
+                            sy = (originalHeight - sHeight) / 2;
+                        }
+                    } else if (imageFit === 'contain') {
+                        if (imgAspect > cellAspect) {
+                            dWidth = cellWidth;
+                            dHeight = dWidth / imgAspect;
+                            dy = cellY + (cellHeight - dHeight) / 2;
+                        } else {
+                            dHeight = cellHeight;
+                            dWidth = dHeight * imgAspect;
+                            dx = cellX + (cellWidth - dWidth) / 2;
+                        }
+                    }
+
+                    ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+                    ctx.restore(); // Restore from filter, shadow, clip
+
+                    // Draw box borders
+                    if (borderStyle === 'box' && borderWidth > 0) {
+                        ctx.save();
+                        ctx.strokeStyle = borderColor;
+                        ctx.lineWidth = borderWidth;
+                        if (imageCornerRadius > 0) {
+                            roundedRectPath(ctx, cellX, cellY, cellWidth, cellHeight, imageCornerRadius);
+                            ctx.stroke();
+                        } else {
+                            ctx.strokeRect(cellX, cellY, cellWidth, cellHeight);
+                        }
+                        ctx.restore();
+                    }
+                    
+                    // Draw labels
+                    if (showLabels) {
+                        drawLabel(ctx, position + 1, cellX, cellY, cellWidth, cellHeight, {
+                            style: labelStyle, 
+                            position: labelPosition, 
+                            fontFamily: labelFont, 
+                            fontSize: labelSize === 'auto' ? Math.max(10, Math.min(24, Math.floor(Math.min(cellWidth, cellHeight) * 0.1))) : parseInt(labelSize),
+                            textColor: labelTextColor, 
+                            bgColor: labelBgColor, 
+                            bgOpacity: labelBgOpacity,
+                            borderWidth: borderStyle === 'box' ? borderWidth : 0,
+                            cornerRadius: imageCornerRadius
+                        });
+                    }
+                });
+            }
+            
+            // Draw dividing lines
+            if (borderStyle === 'lines' && borderWidth > 0) {
+                ctx.save();
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = borderWidth;
+                
+                // Horizontal lines
+                for (let r_line = 0; r_line < effectiveRows - 1; r_line++) {
+                    const lineY = outerPadding + (r_line + 1) * cellHeight + r_line * spacing + spacing / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(outerPadding, lineY);
+                    ctx.lineTo(canvas.width - outerPadding, lineY);
+                    ctx.stroke();
+                }
+                
+                // Vertical lines
+                for (let c_line = 0; c_line < cols - 1; c_line++) {
+                    const lineX = outerPadding + (c_line + 1) * cellWidth + c_line * spacing + spacing / 2;
+                    const lineBottomY = outerPadding + effectiveRows * cellHeight + Math.max(0, effectiveRows - 1) * spacing;
+                    ctx.beginPath();
+                    ctx.moveTo(lineX, outerPadding);
+                    ctx.lineTo(lineX, lineBottomY);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+            
+            // Apply aspect ratio if specified (to the base rendered canvas)
+            if (canvasAspectRatio && canvasAspectRatio !== 'auto') {
+                const ratioParts = canvasAspectRatio.split(':').map(Number);
+                const targetRatio = ratioParts[0] / ratioParts[1];
+                
+                let finalWidth, finalHeight;
+                const currentRatio = canvas.width / canvas.height;
+                
+                if (currentRatio > targetRatio) {
+                    // Content is wider than target ratio
+                    finalHeight = canvas.height;
+                    finalWidth = finalHeight * targetRatio;
+                } else {
+                    // Content is taller than target ratio
+                    finalWidth = canvas.width;
+                    finalHeight = finalWidth / targetRatio;
+                }
+                
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = finalWidth;
+                finalCanvas.height = finalHeight;
+                const finalCtx = finalCanvas.getContext('2d');
+                finalCtx.imageSmoothingQuality = 'high';
+                
+                // Fill background for letterboxing
+                if (!transparentBackground) {
+                    finalCtx.fillStyle = canvasBgColor || '#ffffff';
+                    finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+                }
+                
+                // Center the content in the new aspect ratio
+                const scale = Math.min(finalWidth / canvas.width, finalHeight / canvas.height);
+                const scaledWidth = canvas.width * scale;
+                const scaledHeight = canvas.height * scale;
+                const offsetX = (finalWidth - scaledWidth) / 2;
+                const offsetY = (finalHeight - scaledHeight) / 2;
+                
+                finalCtx.drawImage(canvas, offsetX, offsetY, scaledWidth, scaledHeight);
+                return finalCanvas;
+            }
+            
+            return canvas;
+        }
+
+        function roundedRectPath(ctx, x, y, width, height, radius) {
+            if (radius === 0) {
+                ctx.rect(x, y, width, height);
+                return;
+            }
+            
+            const maxRadius = Math.min(width, height) / 2;
+            radius = Math.min(radius, maxRadius);
+            
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.arcTo(x + width, y, x + width, y + radius, radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+            ctx.lineTo(x + radius, y + height);
+            ctx.arcTo(x, y + height, x, y + height - radius, radius);
+            ctx.lineTo(x, y + radius);
+            ctx.arcTo(x, y, x + radius, y, radius);
+            ctx.closePath();
+        }
+        
+        function drawLabel(ctx, labelText, imgX, imgY, imgW, imgH, options) {
+            const { 
+                style, position, fontFamily, fontSize, textColor, bgColor, 
+                bgOpacity, borderWidth, cornerRadius
+            } = options;
+            
+            ctx.save();
+            
+            ctx.font = `bold ${fontSize}px ${fontFamily || 'Arial, sans-serif'}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const textMetrics = ctx.measureText(labelText);
+            const textWidth = textMetrics.width;
+            const textHeight = fontSize; // Approximation
+            
+            const padding = Math.max(fontSize * 0.25, 4);
+            let labelWidth, labelHeight, labelRadius;
+            
+            if (style === 'circle') {
+                labelWidth = labelHeight = Math.max(textWidth, textHeight) + padding * 2;
+                labelRadius = labelWidth / 2;
+            } else if (style === 'square') {
+                labelWidth = labelHeight = Math.max(textWidth, textHeight) + padding * 2;
+                labelRadius = 0;
+            } else if (style === 'pill') {
+                labelWidth = textWidth + padding * 2.5;
+                labelHeight = textHeight + padding * 1.5;
+                labelRadius = labelHeight / 2;
+            } else { // minimal
+                labelWidth = textWidth;
+                labelHeight = textHeight;
+                labelRadius = 0;
+            }
+            
+            const margin = Math.max(4, fontSize * 0.2) + borderWidth / 2 + (cornerRadius > 0 ? cornerRadius * 0.3 : 0);
+            let labelX, labelY;
+            
+            switch(position) {
+                case 'top-right':
+                    labelX = imgX + imgW - labelWidth / 2 - margin; // Centered X
+                    labelY = imgY + labelHeight / 2 + margin;    // Centered Y
+                    break;
+                case 'bottom-left':
+                    labelX = imgX + labelWidth / 2 + margin;
+                    labelY = imgY + imgH - labelHeight / 2 - margin;
+                    break;
+                case 'bottom-right':
+                    labelX = imgX + imgW - labelWidth / 2 - margin;
+                    labelY = imgY + imgH - labelHeight / 2 - margin;
+                    break;
+                case 'center':
+                    labelX = imgX + imgW / 2;
+                    labelY = imgY + imgH / 2;
+                    break;
+                case 'top-left':
+                default:
+                    labelX = imgX + labelWidth / 2 + margin;
+                    labelY = imgY + labelHeight / 2 + margin;
+                    break;
+            }
+            
+            if (style !== 'minimal') {
+                ctx.fillStyle = bgColor ? hexToRgba(bgColor, bgOpacity) : 'rgba(255,255,255,0.8)';
+                
+                ctx.beginPath();
+                if (style === 'circle') {
+                    ctx.arc(labelX, labelY, labelRadius, 0, Math.PI * 2);
+                } else if (style === 'pill') {
+                    roundedRectPath(ctx, labelX - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight, labelRadius);
+                } else { // square
+                    ctx.rect(labelX - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight);
+                }
+                ctx.fill();
+            }
+            
+            ctx.fillStyle = textColor || '#000000';
+            ctx.fillText(String(labelText), labelX, labelY);
+            
+            ctx.restore();
+        }
+        
+        function hexToRgba(hex, opacity = 1) {
+            hex = hex.replace('#', '');
+            let r, g, b;
+            
+            if (hex.length === 3) {
+                r = parseInt(hex[0] + hex[0], 16);
+                g = parseInt(hex[1] + hex[1], 16);
+                b = parseInt(hex[2] + hex[2], 16);
+            } else {
+                r = parseInt(hex.substring(0, 2), 16);
+                g = parseInt(hex.substring(2, 4), 16);
+                b = parseInt(hex.substring(4, 6), 16);
+            }
+            
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        
+        function updateButtons() {
+            const hasImagesInGrid = gridImages.size > 0;
+            previewBtn.disabled = !hasImagesInGrid;
+            
+            const canDownload = hasImagesInGrid && previewCanvasSplit && 
+                                previewCanvasSplit.width > 0 && previewCanvasSplit.height > 0 &&
+                                customizationEnabled;
+                                
+            downloadBtn.disabled = !canDownload;
+            downloadBtnSplit.disabled = !canDownload;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                
+                if (header && content) {
+                    header.addEventListener('click', () => {
+                        const isActive = item.classList.contains('active');
+                        
+                        // Collapse all others if this one is not active and will be opened
+                        if(!isActive) {
+                            accordionItems.forEach(otherItem => {
+                                if (otherItem !== item && otherItem.classList.contains('active')) {
+                                    otherItem.classList.remove('active');
+                                    const otherContent = otherItem.querySelector('.accordion-content');
+                                    if (otherContent) otherContent.style.maxHeight = null;
+                                }
+                            });
+                        }
+                        
+                        // Toggle current item
+                        item.classList.toggle('active');
+                        if (item.classList.contains('active')) {
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                        } else {
+                            content.style.maxHeight = null;
+                        }
+                    });
+                }
+            });
+            
+            // Auto-open the first accordion item
+            if (accordionItems.length > 0 && accordionItems[0].querySelector('.accordion-content')) {
+                accordionItems[0].classList.add('active');
+                accordionItems[0].querySelector('.accordion-content').style.maxHeight = 
+                    accordionItems[0].querySelector('.accordion-content').scrollHeight + 'px';
+            }
+            
+            setupPresetsSystem();
+        });
+        
+        function setupPresetsSystem() {
+            const savePresetBtn = document.querySelector('.save-preset-btn');
+            const presetNameInput = document.getElementById('preset-name');
+            const userPresetsList = document.getElementById('user-presets');
+            const builtinPresetsList = document.getElementById('builtin-presets');
+            const emptyPresetsMessage = document.querySelector('.empty-presets-message');
+            
+            const PRESET_STORAGE_KEY = 'imageGridPresets_v1.0.1'; // Versioned key
+            
+            const builtInPresets = [
+                {
+                    name: "Classic Grid",
+                    settings: {
+                        canvasBgColorSplit: "#ffffff", transparentBackgroundSplit: false, canvasPaddingSplit: "20", spacingSplit: "10",
+                        lastRowAlignmentSplit: "center", imageFitSplit: "cover", imageCornerRadiusSplit: "0", canvasAspectRatioSplit: "auto",
+                        borderStyleSplit: "lines", borderWidthSplit: "1", borderColorSplit: "#cccccc", enableShadowsSplit: false, 
+                        shadowDepthSplit: "10", shadowColorSplit: "#000000", showLabelsSplit: true, labelStyleSplit: "circle", 
+                        labelPositionSplit: "top-left", labelFontSplit: "Arial, sans-serif", labelSizeSplit: "auto", labelTextColorSplit: "#ffffff", 
+                        labelBgColorSplit: "#000000", labelBgOpacitySplit: "80", brightnessSplit: "100", contrastSplit: "100", 
+                        saturationSplit: "100", grayscaleSplit: "0", sepiaSplit: "0", outputFormatSplit: "png", outputQualitySplit: "0.9", 
+                        outputDpiSplit: "auto", outputSizeSplit: "auto", customWidthSplit: "1200", customHeightSplit: "900", addWatermarkSplit: false,
+                        watermarkTextSplit: "", watermarkPositionSplit: "bottom-right", watermarkOpacitySplit: "30", 
+                        watermarkColorSplit: "#000000", watermarkFontSizeSplit: "20"
+                    }
+                },
+                {
+                    name: "Modern Portfolio",
+                    settings: {
+                        canvasBgColorSplit: "#f0f0f0", transparentBackgroundSplit: false, canvasPaddingSplit: "30", spacingSplit: "20",
+                        lastRowAlignmentSplit: "left", imageFitSplit: "cover", imageCornerRadiusSplit: "8", canvasAspectRatioSplit: "auto",
+                        borderStyleSplit: "none", borderWidthSplit: "0", borderColorSplit: "#000000", enableShadowsSplit: true, 
+                        shadowDepthSplit: "15", shadowColorSplit: "#000000", showLabelsSplit: false, labelStyleSplit: "circle", 
+                        labelPositionSplit: "top-left", labelFontSplit: "Arial, sans-serif", labelSizeSplit: "auto", labelTextColorSplit: "#ffffff", 
+                        labelBgColorSplit: "#000000", labelBgOpacitySplit: "80", brightnessSplit: "100", contrastSplit: "100", 
+                        saturationSplit: "100", grayscaleSplit: "0", sepiaSplit: "0", outputFormatSplit: "jpeg", outputQualitySplit: "0.85", 
+                        outputDpiSplit: "300", outputSizeSplit: "auto", customWidthSplit: "1200", customHeightSplit: "900", addWatermarkSplit: false,
+                        watermarkTextSplit: "", watermarkPositionSplit: "bottom-right", watermarkOpacitySplit: "30", 
+                        watermarkColorSplit: "#000000", watermarkFontSizeSplit: "20"
+                    }
+                },
+                {
+                    name: "Polaroid Fun",
+                    settings: {
+                        canvasBgColorSplit: "#e0d6c3", transparentBackgroundSplit: false, canvasPaddingSplit: "40", spacingSplit: "25",
+                        lastRowAlignmentSplit: "center", imageFitSplit: "contain", imageCornerRadiusSplit: "4", canvasAspectRatioSplit: "auto",
+                        borderStyleSplit: "box", borderWidthSplit: "15", borderColorSplit: "#ffffff", enableShadowsSplit: true, 
+                        shadowDepthSplit: "10", shadowColorSplit: "#333333", showLabelsSplit: true, labelStyleSplit: "minimal", 
+                        labelPositionSplit: "bottom-right", labelFontSplit: "'Courier New', monospace", labelSizeSplit: "14", labelTextColorSplit: "#222222", 
+                        labelBgColorSplit: "#000000", labelBgOpacitySplit: "80", brightnessSplit: "105", contrastSplit: "110", 
+                        saturationSplit: "90", grayscaleSplit: "0", sepiaSplit: "15", outputFormatSplit: "png", outputQualitySplit: "0.9", 
+                        outputDpiSplit: "150", outputSizeSplit: "auto", customWidthSplit: "1200", customHeightSplit: "900", addWatermarkSplit: false,
+                        watermarkTextSplit: "", watermarkPositionSplit: "bottom-right", watermarkOpacitySplit: "30", 
+                        watermarkColorSplit: "#000000", watermarkFontSizeSplit: "20"
+                    }
+                },
+                {
+                    name: "Instagram Grid (300 DPI)",
+                    settings: {
+                        canvasBgColorSplit: "#ffffff", transparentBackgroundSplit: false, canvasPaddingSplit: "15", spacingSplit: "5",
+                        lastRowAlignmentSplit: "center", imageFitSplit: "cover", imageCornerRadiusSplit: "0", canvasAspectRatioSplit: "1:1",
+                        borderStyleSplit: "none", borderWidthSplit: "0", borderColorSplit: "#000000", enableShadowsSplit: false, 
+                        shadowDepthSplit: "10", shadowColorSplit: "#000000", showLabelsSplit: false, labelStyleSplit: "circle", 
+                        labelPositionSplit: "top-left", labelFontSplit: "Arial, sans-serif", labelSizeSplit: "auto", labelTextColorSplit: "#ffffff", 
+                        labelBgColorSplit: "#000000", labelBgOpacitySplit: "80", brightnessSplit: "100", contrastSplit: "105", 
+                        saturationSplit: "105", grayscaleSplit: "0", sepiaSplit: "0", outputFormatSplit: "jpeg", outputQualitySplit: "0.92", 
+                        outputDpiSplit: "300", outputSizeSplit: "custom", customWidthSplit: "1080", customHeightSplit: "1080", addWatermarkSplit: false,
+                        watermarkTextSplit: "", watermarkPositionSplit: "bottom-right", watermarkOpacitySplit: "30", 
+                        watermarkColorSplit: "#000000", watermarkFontSizeSplit: "20"
+                    }
+                }
+            ];
+
+            function getAllCurrentSettings() {
+                const settings = {};
+                for (const key in customizationControls) {
+                    const control = customizationControls[key];
+                    if (control) {
+                        settings[key] = control.type === 'checkbox' ? control.checked : control.value;
+                    }
+                }
+                return settings;
+            }
+
+            function applySettingsToUI(settings) {
+                for (const key in settings) {
+                    const control = customizationControls[key];
+                    if (control) {
+                        if (control.type === 'checkbox') {
+                            control.checked = settings[key];
+                        } else {
+                            control.value = settings[key];
+                        }
+                        const eventType = (control.type === 'range' || control.type === 'color' || control.type === 'text' || control.type === 'number') ? 'input' : 'change';
+                        control.dispatchEvent(new Event(eventType, { bubbles: true }));
+                    }
+                }
+                if (customizationEnabled) {
+                    handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change to trigger preview
+                }
+            }
+            
+            function renderPresetList(listElement, presets, isUserPreset) {
+                if (!listElement) return;
+                listElement.innerHTML = '';
+                if (presets.length === 0 && isUserPreset) {
+                    if (emptyPresetsMessage) emptyPresetsMessage.style.display = 'block';
+                    return;
+                }
+                if (isUserPreset && emptyPresetsMessage) emptyPresetsMessage.style.display = 'none';
+
+                presets.forEach((preset, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="preset-name">${preset.name}</span>
+                        <div class="preset-actions">
+                            <button class="preset-action-btn apply-btn" data-index="${index}" data-type="${isUserPreset ? 'user' : 'builtin'}">Apply</button>
+                            ${isUserPreset ? `<button class="preset-action-btn delete-btn" data-index="${index}">Delete</button>` : ''}
+                        </div>
+                    `;
+                    listElement.appendChild(li);
+                });
+            }
+
+            function loadUserPresets() {
+                try {
+                    const storedPresets = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY)) || [];
+                    renderPresetList(userPresetsList, storedPresets, true);
+                } catch (e) { console.error("Error loading user presets:", e); }
+            }
+            
+            if (userPresetsList) loadUserPresets();
+            if (builtinPresetsList) renderPresetList(builtinPresetsList, builtInPresets, false);
+            
+            if (savePresetBtn) {
+                savePresetBtn.addEventListener('click', () => {
+                    const name = presetNameInput.value.trim();
+                    if (!name) { alert("Please enter a preset name."); return; }
+                    
+                    const currentSettings = getAllCurrentSettings();
+                    const newPreset = { name, settings: currentSettings, timestamp: Date.now() };
+
+                    try {
+                        const storedPresets = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY)) || [];
+                        storedPresets.push(newPreset);
+                        localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(storedPresets));
+                        presetNameInput.value = '';
+                        loadUserPresets();
+                        alert(`Preset "${name}" saved!`);
+                    } catch (e) { console.error("Error saving preset:", e); alert("Could not save preset."); }
+                });
+            }
+            
+            const accordionContentForPresets = document.querySelector('.accordion-item.advanced-only .accordion-content');
+            if (accordionContentForPresets) {
+                 accordionContentForPresets.addEventListener('click', function(e) { // Changed to listen on a more specific parent
+                    if (e.target.classList.contains('apply-btn')) {
+                        const index = parseInt(e.target.dataset.index);
+                        const type = e.target.dataset.type;
+                        let presetToApply;
+
+                        if (type === 'user') {
+                            const storedPresets = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY)) || [];
+                            presetToApply = storedPresets[index];
+                        } else if (type === 'builtin') {
+                            presetToApply = builtInPresets[index];
+                        }
+
+                        if (presetToApply && presetToApply.settings) {
+                            applySettingsToUI(presetToApply.settings);
+                            alert(`Preset "${presetToApply.name}" applied.`);
+                        }
+                    } else if (e.target.classList.contains('delete-btn')) {
+                        const index = parseInt(e.target.dataset.index);
+                        try {
+                            const storedPresets = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY)) || [];
+                            const presetName = storedPresets[index].name;
+                            if (confirm(`Are you sure you want to delete preset "${presetName}"?`)) {
+                                storedPresets.splice(index, 1);
+                                localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(storedPresets));
+                                loadUserPresets();
+                            }
+                        } catch (e) { console.error("Error deleting preset:", e); }
+                    }
+                });
+            }
+        }
+        
+        // Initial setup
+        updateGrid();
+        updateButtons();
+        initializeCustomizationListeners();
+        updateModeDisplay(); 
+        
+        if (qualityOptionDiv) qualityOptionDiv.style.display = outputFormatSplit.value !== 'png' ? 'block' : 'none';
+        if (customSizeOptionsDiv) customSizeOptionsDiv.style.display = outputSizeSplit.value === 'custom' ? 'block' : 'none';
+        if (shadowOptionsDiv) shadowOptionsDiv.style.display = enableShadowsSplit.checked ? 'block' : 'none';
+        if (watermarkOptionsDiv) watermarkOptionsDiv.style.display = addWatermarkSplit.checked ? 'block' : 'none';
+    </script>
+</body>
+</html>
+```
