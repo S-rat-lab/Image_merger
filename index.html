@@ -356,6 +356,9 @@
         .staging-column {
             width: 300px; 
             flex-shrink: 0; 
+            position: sticky; /* Makes the column sticky */
+            top: 20px; /* Adjust this value for desired distance from top */
+            align-self: flex-start; /* Important for sticky behavior within flex container */
         }
 
         .grid-column {
@@ -363,10 +366,9 @@
             min-width: 0; 
         }
 
-        /* NEW STYLE FOR THE WRAPPER to reduce grid width */
         .grid-area-wrapper {
-            width: 70%; /* Reduce width by 30% */
-            margin: 0 auto; /* Center the grid within the .grid-column */
+            width: 70%;
+            margin: 0 auto;
         }
 
         #image-staging { 
@@ -375,7 +377,7 @@
             border-radius: 8px;
             padding: 15px; 
             background: #fafafa;
-            max-height: 60vh; 
+            max-height: calc(100vh - 100px); /* Adjust based on sticky top and other page elements */
             overflow-y: auto; 
         }
         
@@ -384,6 +386,15 @@
             flex-wrap: wrap;
             gap: 10px; 
             justify-content: flex-start; 
+        }
+
+        .staging-instruction-text { /* NEW STYLE for intimation text */
+            display: none;
+            text-align: center;
+            color: #555;
+            font-style: italic;
+            margin-top: 10px;
+            font-size: 13px;
         }
         
         .staging-image {
@@ -1058,6 +1069,7 @@
             .staging-column {
                 width: 100%;
                 margin-bottom: 20px; 
+                position: static; /* Disable sticky on smaller screens if it causes issues */
             }
             #image-staging {
                 max-height: 300px; 
@@ -1065,10 +1077,8 @@
             .grid-column {
                 width: 100%;
             }
-            /* Ensure grid-area-wrapper takes full width on smaller screens if desired,
-               or adjust its percentage. For now, it will remain 70% of its parent. */
              .grid-area-wrapper {
-                width: 90%; /* Example: make it wider on smaller screens but still centered */
+                width: 90%;
              }
         }
         
@@ -1104,7 +1114,7 @@
             }
 
             .grid-area-wrapper {
-                width: 100%; /* Full width for very small screens */
+                width: 100%; 
              }
         }
     </style>
@@ -1171,10 +1181,11 @@
                             Upload images to start arranging them
                         </p>
                         <div class="staging-images" id="staging-images"></div>
+                        <p id="staging-instruction" class="staging-instruction-text">Drag and drop the images into their place</p>
                     </div>
                 </div>
                 <div class="grid-column">
-                    <div class="grid-area-wrapper"> <!-- NEW WRAPPER for width control -->
+                    <div class="grid-area-wrapper">
                         <div class="grid-container" id="grid-container"></div>
                     </div>
                 </div>
@@ -1609,16 +1620,15 @@
         let gridImages = new Map(); // Stores { file: File, image: imageSrc, originalWidth, originalHeight }
         let currentDraggedImage = null;
         let isLivePreviewActive = false;
-        let customizationEnabled = false; // This flag indicates if the split-screen is active
-        let isAdvancedMode = false; // Track if we're in advanced mode
-        let activePreviewCanvas = null; // Will point to the active preview canvas
-        const BASE_DPI = 96; // Assumed DPI for the screen preview canvas
+        let customizationEnabled = false; 
+        let isAdvancedMode = false; 
+        let activePreviewCanvas = null; 
+        const BASE_DPI = 96; 
         
-        // Auto-scroll variables
         let scrollIntervalId = null;
-        const SCROLL_SENSITIVITY = 75; // Pixels from edge to trigger scroll
-        const SCROLL_SPEED = 20;       // Pixels per interval
-        const SCROLL_INTERVAL_MS = 30; // Milliseconds per scroll step
+        const SCROLL_SENSITIVITY = 75; 
+        const SCROLL_SPEED = 20;       
+        const SCROLL_INTERVAL_MS = 30; 
 
         // DOM elements
         const fileInput = document.getElementById('file-input');
@@ -1631,6 +1641,8 @@
         const rowsInput = document.getElementById('rows');
         const colsInput = document.getElementById('cols');
         const autoAdjustBtn = document.getElementById('auto-adjust');
+        const stagingHelpText = document.getElementById('staging-help'); // Added
+        const stagingInstructionText = document.getElementById('staging-instruction'); // Added
         const stagingImages = document.getElementById('staging-images');
         const gridContainer = document.getElementById('grid-container');
         const previewBtn = document.getElementById('preview-btn');
@@ -1638,13 +1650,11 @@
         const emptyCellsModal = document.getElementById('empty-cells-modal');
         const loading = document.getElementById('loading');
         
-        // Split screen elements
         const splitScreenContainer = document.getElementById('split-screen-container');
         const previewCanvasSplit = document.getElementById('preview-canvas-split');
         const downloadBtnSplit = document.getElementById('download-btn-split');
         const modeToggle = document.getElementById('mode-toggle');
         
-        // Customization controls
         const canvasBgColorSplit = document.getElementById('canvas-bg-color-split');
         const canvasBgColorHex = document.getElementById('canvas-bg-color-hex');
         const transparentBackgroundSplit = document.getElementById('transparent-background-split');
@@ -1682,7 +1692,7 @@
         const outputFormatSplit = document.getElementById('output-format-split');
         const outputQualitySplit = document.getElementById('output-quality-split');
         const qualityOptionDiv = document.getElementById('quality-option');
-        const outputDpiSplit = document.getElementById('output-dpi-split'); // New DPI control
+        const outputDpiSplit = document.getElementById('output-dpi-split');
         const outputSizeSplit = document.getElementById('output-size-split');
         const customSizeOptionsDiv = document.getElementById('custom-size-options');
         const customWidthSplit = document.getElementById('custom-width-split');
@@ -1696,7 +1706,6 @@
         const watermarkColorSplit = document.getElementById('watermark-color-split');
         const watermarkFontSizeSplit = document.getElementById('watermark-font-size-split');
         
-        // Store all customization control elements in an object for easier access in presets
         const customizationControls = {
             canvasBgColorSplit, transparentBackgroundSplit, canvasPaddingSplit, spacingSplit,
             lastRowAlignmentSplit, imageFitSplit, imageCornerRadiusSplit, canvasAspectRatioSplit,
@@ -1705,13 +1714,12 @@
             labelPositionSplit, labelFontSplit, labelSizeSplit, labelTextColorSplit, 
             labelBgColorSplit, labelBgOpacitySplit, brightnessSplit, contrastSplit, 
             saturationSplit, grayscaleSplit, sepiaSplit, outputFormatSplit, outputQualitySplit, 
-            outputDpiSplit, // Added DPI control
+            outputDpiSplit, 
             outputSizeSplit, customWidthSplit, customHeightSplit, addWatermarkSplit,
             watermarkTextSplit, watermarkPositionSplit, watermarkOpacitySplit, 
             watermarkColorSplit, watermarkFontSizeSplit
         };
 
-        // Mode Toggling - Show/Hide Advanced Options
         modeToggle.addEventListener('change', function() {
             isAdvancedMode = this.checked;
             updateModeDisplay();
@@ -1729,7 +1737,6 @@
             });
         }
         
-        // Event listeners
         fileInput.addEventListener('change', handleFileSelect);
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', handleDragOver);
@@ -1743,15 +1750,13 @@
         downloadBtnSplit.addEventListener('click', () => downloadImage(previewCanvasSplit));
         
         function initializeCustomizationListeners() {
-            // Add listeners for all customization controls
             Object.values(customizationControls).forEach(control => {
-                if (control) { // Check if element exists
+                if (control) { 
                     const eventType = (control.type === 'range' || control.type === 'color' || control.type === 'text' || control.type === 'number') ? 'input' : 'change';
                     control.addEventListener(eventType, handleCustomizationChange);
                 }
             });
             
-            // Special case listeners for conditional displays
             if (enableShadowsSplit) {
                 enableShadowsSplit.addEventListener('change', function() {
                     if (shadowOptionsDiv) shadowOptionsDiv.style.display = this.checked ? 'block' : 'none';
@@ -1794,7 +1799,6 @@
                 });
             }
             
-            // Color hex input syncing
             canvasBgColorSplit.addEventListener('input', function() {
                 canvasBgColorHex.value = this.value.toLowerCase();
                 handleCustomizationChange();
@@ -1819,7 +1823,6 @@
                 }
             });
             
-            // Setup slider value displays
             setupSliderValueDisplay('canvas-padding-split', 'canvas-padding-value');
             setupSliderValueDisplay('spacing-split', 'spacing-value');
             setupSliderValueDisplay('image-corner-radius-split', 'image-corner-radius-value');
@@ -1844,7 +1847,7 @@
                     if (isFloat) value = parseFloat(value).toFixed(2);
                     displaySpan.textContent = value;
                 };
-                updateDisplay(); // Initial display
+                updateDisplay();
                 slider.addEventListener('input', updateDisplay);
             }
         }
@@ -1894,7 +1897,11 @@
                         setTimeout(() => alertShownForInvalidFiles = false, 100);
                     }
                 }
-                if (selectedFiles.length === 0) uploadedImagesSection.style.display = 'none';
+                if (selectedFiles.length === 0) {
+                     uploadedImagesSection.style.display = 'none';
+                     stagingHelpText.style.display = 'block';
+                     stagingInstructionText.style.display = 'none';
+                }
                 return;
             }
 
@@ -1917,7 +1924,14 @@
             updateUploadedImagesPreview();
             
             stagingImages.innerHTML = '';
-            document.getElementById('staging-help').style.display = selectedFiles.length > 0 ? 'none' : 'block';
+            
+            if (selectedFiles.length > 0) {
+                stagingHelpText.style.display = 'none';
+                stagingInstructionText.style.display = 'block';
+            } else {
+                stagingHelpText.style.display = 'block';
+                stagingInstructionText.style.display = 'none';
+            }
             
             selectedFiles.forEach((file, index) => {
                 const imgEl = document.createElement('img');
@@ -2001,7 +2015,8 @@
                 });
             } else {
                 uploadedImagesSection.style.display = 'none';
-                document.getElementById('staging-help').style.display = 'block';
+                stagingHelpText.style.display = 'block';
+                stagingInstructionText.style.display = 'none';
             }
         }
         
@@ -2037,7 +2052,8 @@
             
             stagingImages.innerHTML = ''; 
             if (selectedFiles.length > 0) {
-                document.getElementById('staging-help').style.display = 'none';
+                stagingHelpText.style.display = 'none';
+                stagingInstructionText.style.display = 'block';
                 selectedFiles.forEach((file, index) => {
                     const img = document.createElement('img');
                     img.className = 'staging-image';
@@ -2057,7 +2073,8 @@
                     stagingImages.appendChild(container);
                 });
             } else {
-                document.getElementById('staging-help').style.display = 'block';
+                stagingHelpText.style.display = 'block';
+                stagingInstructionText.style.display = 'none';
             }
             
             updateGrid(); 
@@ -2116,7 +2133,7 @@
         }
         
         function autoScrollOnDrag(e) {
-            if (!currentDraggedImage) { // Ensure we are actually dragging a staging image
+            if (!currentDraggedImage) { 
                 if (scrollIntervalId) {
                     clearInterval(scrollIntervalId);
                     scrollIntervalId = null;
@@ -2127,20 +2144,20 @@
             const clientY = e.clientY;
             const windowHeight = window.innerHeight;
 
-            if (clientY < SCROLL_SENSITIVITY) { // Near top
-                if (!scrollIntervalId) { // Start scrolling up if not already
+            if (clientY < SCROLL_SENSITIVITY) { 
+                if (!scrollIntervalId) { 
                     scrollIntervalId = setInterval(() => {
                         window.scrollBy(0, -SCROLL_SPEED);
                     }, SCROLL_INTERVAL_MS);
                 }
-            } else if (clientY > windowHeight - SCROLL_SENSITIVITY) { // Near bottom
-                if (!scrollIntervalId) { // Start scrolling down if not already
+            } else if (clientY > windowHeight - SCROLL_SENSITIVITY) { 
+                if (!scrollIntervalId) { 
                     scrollIntervalId = setInterval(() => {
                         window.scrollBy(0, SCROLL_SPEED);
                     }, SCROLL_INTERVAL_MS);
                 }
-            } else { // Not in a scroll zone
-                if (scrollIntervalId) { // Stop scrolling if currently active
+            } else { 
+                if (scrollIntervalId) { 
                     clearInterval(scrollIntervalId);
                     scrollIntervalId = null;
                 }
@@ -2160,12 +2177,12 @@
             };
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
-            document.addEventListener('dragover', autoScrollOnDrag); // Start listening for auto-scroll
+            document.addEventListener('dragover', autoScrollOnDrag); 
         }
         
         function handleStagingDragEnd(e) {
-            document.removeEventListener('dragover', autoScrollOnDrag); // Stop listening for auto-scroll
-            if (scrollIntervalId) { // Clear any active scroll interval
+            document.removeEventListener('dragover', autoScrollOnDrag); 
+            if (scrollIntervalId) { 
                 clearInterval(scrollIntervalId);
                 scrollIntervalId = null;
             }
@@ -3169,6 +3186,10 @@ async function showPreview() {
         updateButtons();
         initializeCustomizationListeners();
         updateModeDisplay(); 
+        
+        // Manage initial state of staging texts
+        stagingHelpText.style.display = 'block';
+        stagingInstructionText.style.display = 'none';
         
         if (qualityOptionDiv) qualityOptionDiv.style.display = outputFormatSplit.value !== 'png' ? 'block' : 'none';
         if (customSizeOptionsDiv) customSizeOptionsDiv.style.display = outputSizeSplit.value === 'custom' ? 'block' : 'none';
