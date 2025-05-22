@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -362,6 +361,12 @@
         .grid-column {
             flex-grow: 1; 
             min-width: 0; 
+        }
+
+        /* NEW STYLE FOR THE WRAPPER to reduce grid width */
+        .grid-area-wrapper {
+            width: 70%; /* Reduce width by 30% */
+            margin: 0 auto; /* Center the grid within the .grid-column */
         }
 
         #image-staging { 
@@ -1060,6 +1065,11 @@
             .grid-column {
                 width: 100%;
             }
+            /* Ensure grid-area-wrapper takes full width on smaller screens if desired,
+               or adjust its percentage. For now, it will remain 70% of its parent. */
+             .grid-area-wrapper {
+                width: 90%; /* Example: make it wider on smaller screens but still centered */
+             }
         }
         
         @media (max-width: 768px) {
@@ -1092,6 +1102,10 @@
                 flex-direction: column;
                 gap: 10px;
             }
+
+            .grid-area-wrapper {
+                width: 100%; /* Full width for very small screens */
+             }
         }
     </style>
 </head>
@@ -1099,7 +1113,7 @@
     <div class="header">
         <h1>Ultimate Image Grid Maker</h1>
         <p>Create beautiful image grids with drag-and-drop placement and advanced customization</p>
-        <div class="version-badge">v1.0.1</div> <!-- Version incremented -->
+        <div class="version-badge">v1.0.1</div>
     </div>
 
     <!-- Image View Modal -->
@@ -1160,7 +1174,9 @@
                     </div>
                 </div>
                 <div class="grid-column">
-                    <div class="grid-container" id="grid-container"></div>
+                    <div class="grid-area-wrapper"> <!-- NEW WRAPPER for width control -->
+                        <div class="grid-container" id="grid-container"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1598,6 +1614,12 @@
         let activePreviewCanvas = null; // Will point to the active preview canvas
         const BASE_DPI = 96; // Assumed DPI for the screen preview canvas
         
+        // Auto-scroll variables
+        let scrollIntervalId = null;
+        const SCROLL_SENSITIVITY = 75; // Pixels from edge to trigger scroll
+        const SCROLL_SPEED = 20;       // Pixels per interval
+        const SCROLL_INTERVAL_MS = 30; // Milliseconds per scroll step
+
         // DOM elements
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.getElementById('upload-area');
@@ -1828,10 +1850,7 @@
         }
         
         async function handleCustomizationChange() {
-            // DPI change does not re-render the live preview, only affects download.
-            // All other changes will re-render.
             if (customizationEnabled && gridImages.size > 0) {
-                 // Check if the event target is NOT the DPI dropdown
                 if (!event || (event && event.target && event.target.id !== 'output-dpi-split')) {
                     await generatePreview();
                 }
@@ -2006,7 +2025,6 @@
             const removedFile = selectedFiles[indexToRemove];
             selectedFiles.splice(indexToRemove, 1);
 
-            // Remove from gridImages if present
             let positionsToRemove = [];
             gridImages.forEach((imageData, position) => {
                 if (imageData.file.name === removedFile.name && imageData.file.size === removedFile.size) {
@@ -2017,7 +2035,6 @@
             
             updateUploadedImagesPreview();
             
-            // Rebuild staging images
             stagingImages.innerHTML = ''; 
             if (selectedFiles.length > 0) {
                 document.getElementById('staging-help').style.display = 'none';
@@ -2046,7 +2063,7 @@
             updateGrid(); 
             autoAdjustGrid(); 
             updateButtons();
-            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}});
         }
         
         function updateGrid() {
@@ -2076,7 +2093,7 @@
                 gridContainer.appendChild(cell);
             }
             restoreGridImages();
-            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}});
         }
         
         function autoAdjustGrid() {
@@ -2098,6 +2115,38 @@
             updateGrid();
         }
         
+        function autoScrollOnDrag(e) {
+            if (!currentDraggedImage) { // Ensure we are actually dragging a staging image
+                if (scrollIntervalId) {
+                    clearInterval(scrollIntervalId);
+                    scrollIntervalId = null;
+                }
+                return;
+            }
+
+            const clientY = e.clientY;
+            const windowHeight = window.innerHeight;
+
+            if (clientY < SCROLL_SENSITIVITY) { // Near top
+                if (!scrollIntervalId) { // Start scrolling up if not already
+                    scrollIntervalId = setInterval(() => {
+                        window.scrollBy(0, -SCROLL_SPEED);
+                    }, SCROLL_INTERVAL_MS);
+                }
+            } else if (clientY > windowHeight - SCROLL_SENSITIVITY) { // Near bottom
+                if (!scrollIntervalId) { // Start scrolling down if not already
+                    scrollIntervalId = setInterval(() => {
+                        window.scrollBy(0, SCROLL_SPEED);
+                    }, SCROLL_INTERVAL_MS);
+                }
+            } else { // Not in a scroll zone
+                if (scrollIntervalId) { // Stop scrolling if currently active
+                    clearInterval(scrollIntervalId);
+                    scrollIntervalId = null;
+                }
+            }
+        }
+
         function handleStagingDragStart(e) {
             const originalIndex = parseInt(e.target.dataset.index);
             if (originalIndex < 0 || originalIndex >= selectedFiles.length) {
@@ -2111,9 +2160,15 @@
             };
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
+            document.addEventListener('dragover', autoScrollOnDrag); // Start listening for auto-scroll
         }
         
         function handleStagingDragEnd(e) {
+            document.removeEventListener('dragover', autoScrollOnDrag); // Stop listening for auto-scroll
+            if (scrollIntervalId) { // Clear any active scroll interval
+                clearInterval(scrollIntervalId);
+                scrollIntervalId = null;
+            }
             if (e.target) e.target.classList.remove('dragging');
             currentDraggedImage = null;
         }
@@ -2183,7 +2238,7 @@
             
             gridImages.set(position, imageData);
             updateButtons();
-            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+            if (customizationEnabled) handleCustomizationChange({target: {id: 'some-other-control'}});
         }
         
         function removeImageFromGrid(position) {
@@ -2204,7 +2259,7 @@
             updateButtons();
             if (customizationEnabled) {
                 if (gridImages.size === 0) exitSplitScreen();
-                else handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change
+                else handleCustomizationChange({target: {id: 'some-other-control'}});
             }
         }
         
@@ -2231,7 +2286,6 @@
                     gridImages.delete(position);
                 }
             });
-            // Clean up any 'occupied' classes on cells that no longer have images
             const cells = gridContainer.querySelectorAll('.grid-cell');
             cells.forEach(cell => {
                 const pos = parseInt(cell.dataset.position);
@@ -2291,7 +2345,7 @@ async function showPreview() {
             document.querySelector('.container').classList.add('hide-when-split');
             document.querySelector('.action-buttons:not(.customization-panel .action-buttons)').classList.add('hide-when-split');
             
-            updateModeDisplay(); // Make sure advanced/basic mode is properly displayed
+            updateModeDisplay(); 
             await generatePreview();
             
             setTimeout(() => {
@@ -2395,7 +2449,6 @@ async function showPreview() {
 
             let workingCanvas = canvasToDownload;
 
-            // 1. Apply DPI Scaling (if not 'auto')
             if (selectedDPIValue !== 'auto') {
                 const targetDPI = parseInt(selectedDPIValue);
                 if (!isNaN(targetDPI) && targetDPI > 0 && targetDPI !== BASE_DPI) {
@@ -2407,13 +2460,12 @@ async function showPreview() {
                     dpiScaledCanvas.width = newWidth;
                     dpiScaledCanvas.height = newHeight;
                     const dpiCtx = dpiScaledCanvas.getContext('2d');
-                    dpiCtx.imageSmoothingQuality = 'high'; // Prefer quality for scaling
+                    dpiCtx.imageSmoothingQuality = 'high'; 
                     dpiCtx.drawImage(canvasToDownload, 0, 0, newWidth, newHeight);
                     workingCanvas = dpiScaledCanvas;
                 }
             }
             
-            // 2. Handle custom output size constraint (applied *after* DPI scaling)
             if (outputSizeSplit.value === 'custom') {
                 const maxWidth = parseInt(customWidthSplit.value) || workingCanvas.width;
                 const maxHeight = parseInt(customHeightSplit.value) || workingCanvas.height;
@@ -2431,7 +2483,6 @@ async function showPreview() {
                     newWidth = newHeight * aspectRatio;
                 }
                 
-                // Only rescale if necessary
                 if (newWidth !== workingCanvas.width || newHeight !== workingCanvas.height) {
                     const constrainedCanvas = document.createElement('canvas');
                     constrainedCanvas.width = Math.round(newWidth);
@@ -2443,7 +2494,6 @@ async function showPreview() {
                 }
             }
 
-            // 3. Add watermark if enabled (applied to the potentially scaled/constrained canvas)
             if (addWatermarkSplit.checked && watermarkTextSplit.value.trim() !== '') {
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = workingCanvas.width;
@@ -2479,9 +2529,6 @@ async function showPreview() {
             ctx.textBaseline = 'middle';
 
             const metrics = ctx.measureText(text);
-            // const textWidth = metrics.width; // Not strictly needed for centering
-            // const textHeight = options.fontSize; // Not strictly needed for centering
-
             const padding = options.fontSize * 0.5;
             let x, y;
 
@@ -2554,7 +2601,6 @@ async function showPreview() {
                 return emptyCanvas;
             }
 
-            // Determine cell size based on first image dimensions
             let cellWidth = 0;
             let cellHeight = 0;
 
@@ -2567,7 +2613,6 @@ async function showPreview() {
                  cellWidth = 300; cellHeight = 200;
             }
 
-            // Determine the actual number of rows used
             let maxRowUsed = -1;
             loadedImageObjects.forEach(obj => {
                 const r = Math.floor(obj.position / cols);
@@ -2575,21 +2620,18 @@ async function showPreview() {
             });
             const effectiveRows = maxRowUsed + 1;
 
-            // Calculate canvas dimensions
             const outerPadding = canvasPadding;
             const contentGridWidth = (cellWidth * cols) + (spacing * Math.max(0, cols - 1));
             const contentGridHeight = (cellHeight * effectiveRows) + (spacing * Math.max(0, effectiveRows - 1));
             
-            // Create the canvas
             const canvasWidth = contentGridWidth + (outerPadding * 2);
             const canvasHeight = contentGridHeight + (outerPadding * 2);
             const canvas = document.createElement('canvas');
             canvas.width = canvasWidth > 0 ? canvasWidth : 300;
             canvas.height = canvasHeight > 0 ? canvasHeight : 200;
             const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingQuality = 'high'; // Prefer quality for initial render
+            ctx.imageSmoothingQuality = 'high'; 
             
-            // Fill the background
             if (!transparentBackground) {
                 ctx.fillStyle = canvasBgColor || '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2597,12 +2639,10 @@ async function showPreview() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
             
-            // Draw the images
             for (let r_idx = 0; r_idx < effectiveRows; r_idx++) {
                 const imagesInThisRow = loadedImageObjects.filter(obj => Math.floor(obj.position / cols) === r_idx)
                                        .sort((a, b) => (a.position % cols) - (b.position % cols));
 
-                // Handle last row alignment
                 let rowStartX = outerPadding;
                 if (r_idx === maxRowUsed && imagesInThisRow.length < cols && imagesInThisRow.length > 0) {
                     const contentWidthThisRow = (imagesInThisRow.length * cellWidth) + (Math.max(0, imagesInThisRow.length - 1) * spacing);
@@ -2614,7 +2654,6 @@ async function showPreview() {
                     }
                 }
                 
-                // Process each image in the row
                 imagesInThisRow.forEach((obj, colIndexInRow) => {
                     const { img, position, originalWidth, originalHeight } = obj;
                     const cellX = rowStartX + colIndexInRow * (cellWidth + spacing);
@@ -2622,7 +2661,6 @@ async function showPreview() {
                     
                     ctx.save();
 
-                    // Apply image adjustments
                     let filterString = '';
                     if (brightness !== 100) filterString += `brightness(${brightness}%) `;
                     if (contrast !== 100) filterString += `contrast(${contrast}%) `;
@@ -2631,7 +2669,6 @@ async function showPreview() {
                     if (sepia > 0) filterString += `sepia(${sepia}%) `;
                     if (filterString) ctx.filter = filterString.trim();
 
-                    // Add shadows
                     if (enableShadows && shadowDepth > 0) {
                         ctx.shadowColor = shadowColor;
                         ctx.shadowBlur = shadowDepth;
@@ -2639,13 +2676,11 @@ async function showPreview() {
                         ctx.shadowOffsetY = shadowDepth / 4;
                     }
 
-                    // Apply rounded corners if needed
                     if (imageCornerRadius > 0) {
                         roundedRectPath(ctx, cellX, cellY, cellWidth, cellHeight, imageCornerRadius);
                         ctx.clip();
                     }
                     
-                    // Draw the image with proper sizing based on imageFit
                     let sx = 0, sy = 0, sWidth = originalWidth, sHeight = originalHeight;
                     let dx = cellX, dy = cellY, dWidth = cellWidth, dHeight = cellHeight;
 
@@ -2675,9 +2710,8 @@ async function showPreview() {
                     }
 
                     ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-                    ctx.restore(); // Restore from filter, shadow, clip
+                    ctx.restore(); 
 
-                    // Draw box borders
                     if (borderStyle === 'box' && borderWidth > 0) {
                         ctx.save();
                         ctx.strokeStyle = borderColor;
@@ -2691,7 +2725,6 @@ async function showPreview() {
                         ctx.restore();
                     }
                     
-                    // Draw labels
                     if (showLabels) {
                         drawLabel(ctx, position + 1, cellX, cellY, cellWidth, cellHeight, {
                             style: labelStyle, 
@@ -2708,13 +2741,11 @@ async function showPreview() {
                 });
             }
             
-            // Draw dividing lines
             if (borderStyle === 'lines' && borderWidth > 0) {
                 ctx.save();
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = borderWidth;
                 
-                // Horizontal lines
                 for (let r_line = 0; r_line < effectiveRows - 1; r_line++) {
                     const lineY = outerPadding + (r_line + 1) * cellHeight + r_line * spacing + spacing / 2;
                     ctx.beginPath();
@@ -2723,7 +2754,6 @@ async function showPreview() {
                     ctx.stroke();
                 }
                 
-                // Vertical lines
                 for (let c_line = 0; c_line < cols - 1; c_line++) {
                     const lineX = outerPadding + (c_line + 1) * cellWidth + c_line * spacing + spacing / 2;
                     const lineBottomY = outerPadding + effectiveRows * cellHeight + Math.max(0, effectiveRows - 1) * spacing;
@@ -2735,7 +2765,6 @@ async function showPreview() {
                 ctx.restore();
             }
             
-            // Apply aspect ratio if specified (to the base rendered canvas)
             if (canvasAspectRatio && canvasAspectRatio !== 'auto') {
                 const ratioParts = canvasAspectRatio.split(':').map(Number);
                 const targetRatio = ratioParts[0] / ratioParts[1];
@@ -2744,11 +2773,9 @@ async function showPreview() {
                 const currentRatio = canvas.width / canvas.height;
                 
                 if (currentRatio > targetRatio) {
-                    // Content is wider than target ratio
                     finalHeight = canvas.height;
                     finalWidth = finalHeight * targetRatio;
                 } else {
-                    // Content is taller than target ratio
                     finalWidth = canvas.width;
                     finalHeight = finalWidth / targetRatio;
                 }
@@ -2759,13 +2786,11 @@ async function showPreview() {
                 const finalCtx = finalCanvas.getContext('2d');
                 finalCtx.imageSmoothingQuality = 'high';
                 
-                // Fill background for letterboxing
                 if (!transparentBackground) {
                     finalCtx.fillStyle = canvasBgColor || '#ffffff';
                     finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
                 }
                 
-                // Center the content in the new aspect ratio
                 const scale = Math.min(finalWidth / canvas.width, finalHeight / canvas.height);
                 const scaledWidth = canvas.width * scale;
                 const scaledHeight = canvas.height * scale;
@@ -2815,7 +2840,7 @@ async function showPreview() {
             
             const textMetrics = ctx.measureText(labelText);
             const textWidth = textMetrics.width;
-            const textHeight = fontSize; // Approximation
+            const textHeight = fontSize; 
             
             const padding = Math.max(fontSize * 0.25, 4);
             let labelWidth, labelHeight, labelRadius;
@@ -2830,7 +2855,7 @@ async function showPreview() {
                 labelWidth = textWidth + padding * 2.5;
                 labelHeight = textHeight + padding * 1.5;
                 labelRadius = labelHeight / 2;
-            } else { // minimal
+            } else { 
                 labelWidth = textWidth;
                 labelHeight = textHeight;
                 labelRadius = 0;
@@ -2841,8 +2866,8 @@ async function showPreview() {
             
             switch(position) {
                 case 'top-right':
-                    labelX = imgX + imgW - labelWidth / 2 - margin; // Centered X
-                    labelY = imgY + labelHeight / 2 + margin;    // Centered Y
+                    labelX = imgX + imgW - labelWidth / 2 - margin; 
+                    labelY = imgY + labelHeight / 2 + margin;    
                     break;
                 case 'bottom-left':
                     labelX = imgX + labelWidth / 2 + margin;
@@ -2871,7 +2896,7 @@ async function showPreview() {
                     ctx.arc(labelX, labelY, labelRadius, 0, Math.PI * 2);
                 } else if (style === 'pill') {
                     roundedRectPath(ctx, labelX - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight, labelRadius);
-                } else { // square
+                } else { 
                     ctx.rect(labelX - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight);
                 }
                 ctx.fill();
@@ -2923,7 +2948,6 @@ async function showPreview() {
                     header.addEventListener('click', () => {
                         const isActive = item.classList.contains('active');
                         
-                        // Collapse all others if this one is not active and will be opened
                         if(!isActive) {
                             accordionItems.forEach(otherItem => {
                                 if (otherItem !== item && otherItem.classList.contains('active')) {
@@ -2934,7 +2958,6 @@ async function showPreview() {
                             });
                         }
                         
-                        // Toggle current item
                         item.classList.toggle('active');
                         if (item.classList.contains('active')) {
                             content.style.maxHeight = content.scrollHeight + 'px';
@@ -2945,7 +2968,6 @@ async function showPreview() {
                 }
             });
             
-            // Auto-open the first accordion item
             if (accordionItems.length > 0 && accordionItems[0].querySelector('.accordion-content')) {
                 accordionItems[0].classList.add('active');
                 accordionItems[0].querySelector('.accordion-content').style.maxHeight = 
@@ -2962,7 +2984,7 @@ async function showPreview() {
             const builtinPresetsList = document.getElementById('builtin-presets');
             const emptyPresetsMessage = document.querySelector('.empty-presets-message');
             
-            const PRESET_STORAGE_KEY = 'imageGridPresets_v1.0.1'; // Versioned key
+            const PRESET_STORAGE_KEY = 'imageGridPresets_v1.0.1';
             
             const builtInPresets = [
                 {
@@ -3052,7 +3074,7 @@ async function showPreview() {
                     }
                 }
                 if (customizationEnabled) {
-                    handleCustomizationChange({target: {id: 'some-other-control'}}); // Simulate non-DPI change to trigger preview
+                    handleCustomizationChange({target: {id: 'some-other-control'}});
                 }
             }
             
@@ -3109,7 +3131,7 @@ async function showPreview() {
             
             const accordionContentForPresets = document.querySelector('.accordion-item.advanced-only .accordion-content');
             if (accordionContentForPresets) {
-                 accordionContentForPresets.addEventListener('click', function(e) { // Changed to listen on a more specific parent
+                 accordionContentForPresets.addEventListener('click', function(e) {
                     if (e.target.classList.contains('apply-btn')) {
                         const index = parseInt(e.target.dataset.index);
                         const type = e.target.dataset.type;
@@ -3155,4 +3177,3 @@ async function showPreview() {
     </script>
 </body>
 </html>
-```
